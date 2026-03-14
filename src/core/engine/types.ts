@@ -12,6 +12,7 @@ export interface ToolDefinition {
 	description: string;
 	scopes: string[];
 	input: Record<string, ZodType>;
+	outputFields?: string[];
 	graphql?: string;
 	handler?: (input: any, ctx: ExecutionContext) => Promise<any>;
 	response?: (data: any) => any;
