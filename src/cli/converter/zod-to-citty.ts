@@ -65,7 +65,16 @@ function convertToCitty(schema: ZodType): CittyArgDef {
 	}
 
 	if (typeName === "ZodNumber") {
-		return { type: "string", ...(description && { description }), required: true };
+		const parts: string[] = [];
+		if (description) parts.push(description);
+		if (def.checks) {
+			for (const check of def.checks) {
+				if (check.kind === "min") parts.push(`min: ${check.value}`);
+				if (check.kind === "max") parts.push(`max: ${check.value}`);
+			}
+		}
+		const desc = parts.length > 0 ? parts.join(", ") : undefined;
+		return { type: "string", ...(desc && { description: desc }), required: true };
 	}
 
 	if (typeName === "ZodBoolean") {

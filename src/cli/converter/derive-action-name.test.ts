@@ -227,4 +227,76 @@ describe("deriveActionName", () => {
 			expect(deriveActionName("product", "products")).toBe("product");
 		});
 	});
+
+	describe("collision detection", () => {
+		it("produces unique action names within each domain", () => {
+			const toolsByDomain: Record<string, { tool: string; domain: string }[]> = {
+				products: [
+					{ tool: "list_products", domain: "products" },
+					{ tool: "search_products", domain: "products" },
+					{ tool: "get_product", domain: "products" },
+					{ tool: "create_product", domain: "products" },
+					{ tool: "update_product", domain: "products" },
+					{ tool: "get_product_by_handle", domain: "products" },
+					{ tool: "get_product_variant", domain: "products" },
+					{ tool: "list_product_variants", domain: "products" },
+					{ tool: "create_product_variant", domain: "products" },
+					{ tool: "update_product_variant", domain: "products" },
+					{ tool: "update_product_status", domain: "products" },
+					{ tool: "manage_product_tags", domain: "products" },
+					{ tool: "list_collections", domain: "products" },
+					{ tool: "get_collection", domain: "products" },
+					{ tool: "create_collection", domain: "products" },
+				],
+				orders: [
+					{ tool: "list_orders", domain: "orders" },
+					{ tool: "search_orders", domain: "orders" },
+					{ tool: "get_order", domain: "orders" },
+					{ tool: "get_order_by_name", domain: "orders" },
+					{ tool: "get_order_timeline", domain: "orders" },
+					{ tool: "get_order_fulfillment_status", domain: "orders" },
+					{ tool: "create_draft_order", domain: "orders" },
+					{ tool: "add_order_note", domain: "orders" },
+					{ tool: "update_order_note", domain: "orders" },
+					{ tool: "add_order_tag", domain: "orders" },
+					{ tool: "update_order_tags", domain: "orders" },
+					{ tool: "mark_order_paid", domain: "orders" },
+				],
+				customers: [
+					{ tool: "list_customers", domain: "customers" },
+					{ tool: "search_customers", domain: "customers" },
+					{ tool: "get_customer", domain: "customers" },
+					{ tool: "create_customer", domain: "customers" },
+					{ tool: "update_customer", domain: "customers" },
+					{ tool: "get_customer_orders", domain: "customers" },
+					{ tool: "get_customer_lifetime_value", domain: "customers" },
+					{ tool: "add_customer_tag", domain: "customers" },
+					{ tool: "remove_customer_tag", domain: "customers" },
+				],
+				inventory: [
+					{ tool: "list_inventory_levels", domain: "inventory" },
+					{ tool: "get_inventory_item", domain: "inventory" },
+					{ tool: "get_inventory_by_sku", domain: "inventory" },
+					{ tool: "get_location_inventory", domain: "inventory" },
+					{ tool: "adjust_inventory", domain: "inventory" },
+					{ tool: "set_inventory_level", domain: "inventory" },
+					{ tool: "low_stock_report", domain: "inventory" },
+				],
+				analytics: [
+					{ tool: "sales_summary", domain: "analytics" },
+					{ tool: "top_products", domain: "analytics" },
+					{ tool: "orders_by_date_range", domain: "analytics" },
+					{ tool: "repeat_customer_rate", domain: "analytics" },
+					{ tool: "refund_rate_summary", domain: "analytics" },
+					{ tool: "inventory_risk_report", domain: "analytics" },
+				],
+			};
+
+			for (const [domain, tools] of Object.entries(toolsByDomain)) {
+				const actionNames = tools.map((t) => deriveActionName(t.tool, t.domain));
+				const unique = new Set(actionNames);
+				expect(unique.size, `Collision in ${domain}: ${actionNames.join(", ")}`).toBe(actionNames.length);
+			}
+		});
+	});
 });
