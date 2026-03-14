@@ -40,9 +40,9 @@ async function loadEnabledTools() {
  * Build the Commander program with static commands and dynamic domain commands.
  */
 const program = new Command()
-	.name("cob-shopify-mcp")
+	.name("cob-shopify")
 	.version(VERSION)
-	.description("cob-shopify-mcp — Shopify CLI & MCP Server")
+	.description("cob-shopify — Shopify CLI & MCP Server")
 	.option("--json", "Output as JSON")
 	.option("--fields <fields>", "Select specific response fields (comma-separated, implies --json)")
 	.option("--jq <expr>", "Filter JSON output with jq expression (implies --json)")

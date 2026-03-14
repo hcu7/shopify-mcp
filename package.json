@@ -7,7 +7,8 @@
 		"node": ">=22"
 	},
 	"bin": {
-		"cob-shopify-mcp": "./dist/cli/index.js"
+		"cob-shopify-mcp": "./dist/cli/index.js",
+		"cob-shopify": "./dist/cli/index.js"
 	},
 	"exports": {
 		".": {
