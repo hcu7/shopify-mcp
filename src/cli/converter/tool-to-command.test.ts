@@ -76,10 +76,7 @@ describe("coerceInput", () => {
 			active: z.boolean().optional(),
 		};
 
-		const result = coerceInput(
-			{ limit: "5", query: "shoes", active: "true" },
-			schema,
-		);
+		const result = coerceInput({ limit: "5", query: "shoes", active: "true" }, schema);
 
 		expect(result).toEqual({ limit: 5, query: "shoes", active: true });
 	});
