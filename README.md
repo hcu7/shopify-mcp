@@ -17,6 +17,32 @@ Production-grade MCP server **and** CLI tool for Shopify. Use it as an MCP serve
 - **Config-driven** — YAML config, env vars, CLI overrides
 - **Type-safe** — Full TypeScript with Zod validation
 
+## MCP vs CLI — When to Use What
+
+This project gives you **two ways** to interact with Shopify. Same tools, same engine, same auth — different interfaces.
+
+| | **CLI** | **MCP** |
+|---|---------|---------|
+| **What it is** | Direct terminal commands | Protocol for AI agents |
+| **Who it's for** | Developers, scripts, CI/CD | Claude, Cursor, Windsurf, custom agents |
+| **How to use** | `cob-shopify-mcp tools run list_products --params '{"limit":5}'` | AI calls tools automatically via MCP protocol |
+| **Install via** | `npm install -g cob-shopify-mcp` | Same npm install, then `claude mcp add` |
+| **Docker** | Not applicable | Yes — HTTP transport for remote/multi-agent |
+| **Custom YAML tools** | Auto-discovered | Auto-discovered |
+| **Output** | JSON to stdout | JSON via MCP response |
+| **Context window** | Zero impact — no tool schemas loaded | All tool schemas injected into AI context |
+| **Best for** | Quick lookups, scripting, pipelines, CI/CD | Conversational AI, multi-step workflows |
+
+**You don't have to choose** — install once, use both:
+
+```bash
+# CLI — run directly from terminal
+cob-shopify-mcp tools run list_products --params '{"limit": 5}'
+
+# MCP — connect to Claude and let AI use the same tools
+claude mcp add shopify -- cob-shopify-mcp start
+```
+
 ## Use Cases
 
 ```mermaid
