@@ -1,10 +1,12 @@
 # cob-shopify-mcp
 
-Production-grade Model Context Protocol (MCP) server for Shopify. Bridges AI systems (Claude Desktop, Cursor, Windsurf, custom agents) with Shopify stores via the Admin GraphQL API.
+Production-grade MCP server **and** CLI tool for Shopify. Use it as an MCP server for AI agents (Claude, Cursor, Windsurf) or as a standalone CLI to manage Shopify stores directly from your terminal — no MCP required.
 
 ## Features
 
 - **49 tools** across 5 domains (Products, Orders, Customers, Inventory, Analytics)
+- **Standalone CLI** — manage your store from the terminal without MCP (`cob-shopify-mcp tools list`, `stores list`, etc.)
+- **MCP server** — connect to Claude, Cursor, Windsurf, or any MCP-compatible AI agent
 - **4 MCP resources** (Shop info, Locations, Policies, Currencies)
 - **4 MCP prompts** (Health check, Sales report, Inventory risk, Support summary)
 - **Dual transport** — stdio (default) + Streamable HTTP

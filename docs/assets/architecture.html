@@ -735,8 +735,8 @@
       </div>
       <h1 class="hero-title reveal reveal-delay-1">cob-shopify-mcp</h1>
       <p class="hero-tagline reveal reveal-delay-2">
-        The definitive Model Context Protocol server for Shopify.
-        Bridge any AI agent to the Shopify Admin API with type-safe, config-driven tooling.
+        The definitive MCP server &amp; CLI tool for Shopify.
+        Bridge any AI agent to the Shopify Admin API — or use the CLI directly without MCP.
       </p>
       <div class="stats-grid reveal reveal-delay-3">
         <div class="stat-card">
@@ -783,7 +783,7 @@
       <div class="section-head reveal">
         <div class="section-label">01 &mdash; Entry Points</div>
         <h2 class="section-title">How Requests Get In</h2>
-        <p class="section-subtitle">Three entry points into the MCP server, supporting CLI workflows, direct stdio piping, and remote HTTP connections.</p>
+        <p class="section-subtitle">Use as an MCP server (stdio or HTTP) for AI agents, or as a standalone CLI tool for direct Shopify management — no MCP required.</p>
       </div>
 
       <div class="cards-row">
@@ -968,7 +968,7 @@ flowchart TB
         <div class="card card-green reveal reveal-delay-1">
           <div class="card-icon card-icon-green">&#128279;</div>
           <div class="card-title">GraphQL Client</div>
-          <div class="card-desc">Built on @shopify/admin-api-client with a middleware pipeline: Rate Limiter (token bucket) &rarr; Cache Layer (TTL-based) &rarr; Retry (exponential backoff).</div>
+          <div class="card-desc">Built on @shopify/admin-api-client with a middleware pipeline: Rate Limiter (cost-based throttling) &rarr; Cache Layer (TTL-based) &rarr; Retry (exponential backoff).</div>
           <div class="card-tags">
             <span class="card-tag">@shopify/admin-api-client</span>
             <span class="card-tag">rate limiter</span>
@@ -1086,7 +1086,7 @@ flowchart TB
     subgraph CLIENT["GraphQL Client Pipeline"]
         direction LR
         CL["<b>@shopify/admin-api-client</b><br/><i>createAdminApiClient()</i>"]
-        RL["<b>Rate Limiter</b><br/><i>token bucket</i>"]
+        RL["<b>Rate Limiter</b><br/><i>cost-based throttling</i>"]
         CA["<b>Cache Layer</b><br/><i>TTL-based</i>"]
         RT["<b>Retry</b><br/><i>exponential backoff</i>"]
     end
@@ -1157,34 +1157,33 @@ flowchart TB
             <div class="pipeline-desc">Verify the tool is enabled in the current configuration and the tier allows execution.</div>
           </div>
         </div>
-        <div class="pipeline-step pipe-req reveal reveal-delay-2">
+        <!-- Execution phase -->
+        <div class="pipeline-step pipe-exec reveal reveal-delay-2">
           <div class="pipeline-num">4</div>
           <div class="pipeline-content">
-            <div class="pipeline-title">Auth Token Injection</div>
-            <div class="pipeline-desc">Auth Manager injects <code>X-Shopify-Access-Token</code> header from the configured auth method.</div>
+            <div class="pipeline-title">Cache Lookup</div>
+            <div class="pipeline-desc">Check TTL-based cache for a matching query. On hit, skip the rest and return cached data immediately.</div>
           </div>
         </div>
-
-        <!-- Execution phase -->
         <div class="pipeline-step pipe-exec reveal reveal-delay-2">
           <div class="pipeline-num">5</div>
           <div class="pipeline-content">
             <div class="pipeline-title">Rate Limit Gate</div>
-            <div class="pipeline-desc">Token bucket algorithm ensures Shopify API rate limits are respected (burst with backpressure).</div>
+            <div class="pipeline-desc">Cost-based throttling respecting Shopify's 1000-point budget with 50/s restore rate.</div>
           </div>
         </div>
         <div class="pipeline-step pipe-exec reveal reveal-delay-2">
           <div class="pipeline-num">6</div>
           <div class="pipeline-content">
-            <div class="pipeline-title">Cache Lookup</div>
-            <div class="pipeline-desc">Check TTL-based cache for a matching query. On hit, skip GraphQL execution and return cached data.</div>
+            <div class="pipeline-title">Auth Token</div>
+            <div class="pipeline-desc">Auth Manager resolves token from the configured provider (static, client-credentials, or OAuth).</div>
           </div>
         </div>
         <div class="pipeline-step pipe-exec reveal reveal-delay-3">
           <div class="pipeline-num">7</div>
           <div class="pipeline-content">
-            <div class="pipeline-title">GraphQL Execute</div>
-            <div class="pipeline-desc">POST the query to Shopify Admin GraphQL API. Retry with exponential backoff on transient failures.</div>
+            <div class="pipeline-title">GraphQL Execute + Retry</div>
+            <div class="pipeline-desc">POST the query to Shopify Admin GraphQL API. Retry with exponential backoff on 429/5xx errors.</div>
           </div>
         </div>
 
@@ -1199,15 +1198,15 @@ flowchart TB
         <div class="pipeline-step pipe-resp reveal reveal-delay-3">
           <div class="pipeline-num">9</div>
           <div class="pipeline-content">
-            <div class="pipeline-title">Audit Log</div>
-            <div class="pipeline-desc">Record tool name, duration, status, parameters, and cost to the audit trail.</div>
+            <div class="pipeline-title">Cache Store</div>
+            <div class="pipeline-desc">Store the successful response in the TTL cache for subsequent identical queries.</div>
           </div>
         </div>
         <div class="pipeline-step pipe-resp reveal reveal-delay-4">
           <div class="pipeline-num">10</div>
           <div class="pipeline-content">
-            <div class="pipeline-title">Cache Store</div>
-            <div class="pipeline-desc">Store the successful response in the TTL cache for subsequent identical queries.</div>
+            <div class="pipeline-title">Audit Log</div>
+            <div class="pipeline-desc">Record tool name, duration, status, parameters, and cost to the audit trail.</div>
           </div>
         </div>
         <div class="pipeline-step pipe-resp reveal reveal-delay-4">
@@ -1235,10 +1234,10 @@ flowchart LR
         R1["1. MCP Tool Call"]
         R2["2. Zod Validation"]
         R3["3. Config/Tier Check"]
-        R4["4. Auth Injection"]
-        R5["5. Rate Limit"]
-        R6["6. Cache Lookup"]
-        R7["7. GraphQL Execute"]
+        R4["4. Cache Lookup"]
+        R5["5. Rate Limit Gate"]
+        R6["6. Auth Token"]
+        R7["7. GraphQL Execute + Retry"]
     end
 
     API["<b>Shopify API</b>"]
@@ -1246,8 +1245,8 @@ flowchart LR
     subgraph RESP["Response Pipeline"]
         direction TB
         S1["8. Response Mapping"]
-        S2["9. Audit Log"]
-        S3["10. Cache Store"]
+        S2["9. Cache Store"]
+        S3["10. Audit Log"]
         S4["11. MCP Response"]
     end
 
@@ -1386,11 +1385,12 @@ flowchart LR
   <!-- ── Footer ── -->
   <footer class="footer">
     <div class="footer-brand">cob-shopify-mcp</div>
-    <div class="footer-desc">The definitive open-source MCP server for Shopify</div>
+    <div class="footer-desc">The definitive open-source MCP server &amp; CLI for Shopify</div>
     <div class="footer-links">
       <a href="https://github.com/svinpeace/cob-shopify-mcp" class="footer-link" target="_blank" rel="noopener">GitHub</a>
       <a href="https://www.npmjs.com/package/cob-shopify-mcp" class="footer-link" target="_blank" rel="noopener">npm</a>
     </div>
+    <div class="footer-desc" style="margin-top:1rem;font-size:0.75rem;">Powered by <a href="https://callobuzz.com" style="color:var(--purple-light);text-decoration:none;" target="_blank" rel="noopener">Call O Buzz</a></div>
   </footer>
 
   <!-- ── Scripts ── -->
@@ -1500,7 +1500,7 @@ flowchart LR
     window.zoomDiagram = function(id, dir) {
       const state = getDiagramState(id);
       const newScale = state.scale + dir * 0.2;
-      state.scale = Math.max(0.3, Math.min(3, newScale));
+      state.scale = Math.max(0.1, Math.min(8, newScale));
       applyTransform(id);
     };
 
@@ -1522,7 +1522,7 @@ flowchart LR
         e.preventDefault();
         const dir = e.deltaY < 0 ? 1 : -1;
         const state = getDiagramState(id);
-        state.scale = Math.max(0.3, Math.min(3, state.scale + dir * 0.1));
+        state.scale = Math.max(0.1, Math.min(8, state.scale + dir * 0.1));
         applyTransform(id);
       }, { passive: false });
 
