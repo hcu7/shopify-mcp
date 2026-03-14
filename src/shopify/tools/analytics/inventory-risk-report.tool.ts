@@ -12,7 +12,11 @@ export default defineTool({
 	description: "Products at overstock or understock risk based on sales velocity",
 	scopes: ["read_inventory", "read_products"],
 	input: {
-		days_of_stock_threshold: z.coerce.number().min(1).default(30).describe("Days of stock threshold for risk classification"),
+		days_of_stock_threshold: z.coerce
+			.number()
+			.min(1)
+			.default(30)
+			.describe("Days of stock threshold for risk classification"),
 		limit: z.coerce.number().min(1).max(100).default(25).describe("Number of items to return"),
 	},
 	handler: async (input: { days_of_stock_threshold: number; limit: number }, ctx: ExecutionContext) => {

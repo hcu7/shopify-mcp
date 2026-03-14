@@ -878,6 +878,10 @@ This server manages your store via the **Admin GraphQL API**. Pair it with Shopi
 | [`@shopify/dev-mcp`](https://www.npmjs.com/package/@shopify/dev-mcp) | Search Shopify docs, introspect Admin GraphQL schema | Learn the API while this server manages your store |
 | [Storefront MCP](https://shopify.dev/docs/apps/build/storefront-mcp) | Product browsing, cart, checkout (built into every store) | Customer-facing shopping vs admin-side management |
 
+## Changelog
+
+See the full changelog here → [CHANGELOG.md](./CHANGELOG.md)
+
 ## License
 
 MIT

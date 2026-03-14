@@ -41,8 +41,8 @@ export function filterFields(data: unknown, fields: string[]): unknown {
 		const inner = obj[keys[0]];
 		if (inner !== null && typeof inner === "object" && !Array.isArray(inner)) {
 			const innerObj = inner as Record<string, unknown>;
-			const hasFieldsInner = fields.some((f) => !BLOCKED_KEYS.has(f) && Object.prototype.hasOwnProperty.call(innerObj, f));
-			const hasFieldsOuter = fields.some((f) => !BLOCKED_KEYS.has(f) && Object.prototype.hasOwnProperty.call(obj, f));
+			const hasFieldsInner = fields.some((f) => !BLOCKED_KEYS.has(f) && Object.hasOwn(innerObj, f));
+			const hasFieldsOuter = fields.some((f) => !BLOCKED_KEYS.has(f) && Object.hasOwn(obj, f));
 			if (hasFieldsInner && !hasFieldsOuter) {
 				return pickFields(innerObj, fields);
 			}
@@ -64,7 +64,7 @@ function pickFields(item: unknown, fields: string[]): Record<string, unknown> {
 	const result: Record<string, unknown> = {};
 	for (const field of fields) {
 		if (BLOCKED_KEYS.has(field)) continue;
-		if (Object.prototype.hasOwnProperty.call(obj, field)) {
+		if (Object.hasOwn(obj, field)) {
 			result[field] = obj[field];
 		}
 	}

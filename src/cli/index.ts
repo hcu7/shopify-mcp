@@ -65,7 +65,10 @@ program
 		const overrides: Record<string, unknown> = {};
 		if (opts.transport) overrides.transport = { type: opts.transport };
 		if (opts.port) {
-			overrides.transport = { ...(overrides.transport as Record<string, unknown>), port: Number.parseInt(opts.port, 10) };
+			overrides.transport = {
+				...(overrides.transport as Record<string, unknown>),
+				port: Number.parseInt(opts.port, 10),
+			};
 		}
 		if (opts.host) {
 			overrides.transport = { ...(overrides.transport as Record<string, unknown>), host: opts.host };
