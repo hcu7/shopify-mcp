@@ -14,8 +14,9 @@ dist/
 .cob-shopify-mcp/
 data/
 
-# Internal docs (PRDs, capsules, plans)
-docs/
+# Internal docs (PRDs, capsules, plans) — keep docs/assets/ public
+docs/*
+!docs/assets/
 
 # Internal dev files
 CLAUDE.md
