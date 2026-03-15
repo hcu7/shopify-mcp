@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import {
-	type IntegrationContext,
 	cleanupIntegrationContext,
 	createIntegrationContext,
+	type IntegrationContext,
 	skipIfNoCredentials,
 } from "../../test/integration-helpers.js";
 import { executeShopifyQL } from "./shopifyql-client.js";
@@ -61,10 +61,7 @@ describe.skipIf(skipIfNoCredentials())("executeShopifyQL", () => {
 	});
 
 	it("should return empty data for impossible date range", async () => {
-		const result = await executeShopifyQL(
-			"FROM sales SHOW total_sales SINCE 1900-01-01 UNTIL 1900-01-02",
-			context.ctx,
-		);
+		const result = await executeShopifyQL("FROM sales SHOW total_sales SINCE 1900-01-01 UNTIL 1900-01-02", context.ctx);
 
 		expect(result.data).toEqual([]);
 		expect(Array.isArray(result.columns)).toBe(true);
