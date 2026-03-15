@@ -14,17 +14,18 @@ export default defineTool({
 		sort_by: z.enum(["amount", "orders"]).default("amount").describe("Sort by total spend or order count"),
 	},
 	handler: async (input: { limit: number; sort_by: "amount" | "orders" }, ctx: ExecutionContext) => {
-		const sortColumn = input.sort_by === "amount" ? "total_amount_spent" : "total_orders";
-		const query = `FROM customers SHOW customer_email, total_orders, total_amount_spent ORDER BY ${sortColumn} DESC LIMIT ${input.limit}`;
+		// Use sales table grouped by customer — more reliable than customers table
+		const sortColumn = input.sort_by === "amount" ? "total_sales" : "orders";
+		const query = `FROM sales SHOW total_sales, orders GROUP BY customer_name ORDER BY ${sortColumn} DESC LIMIT ${input.limit}`;
 		const result = await executeShopifyQL(query, ctx);
 		const customers = result.data.map((row) => {
-			const totalOrders = (row.total_orders as number) ?? 0;
-			const totalAmountSpent = (row.total_amount_spent as number) ?? 0;
+			const totalOrders = (row.orders as number) ?? 0;
+			const totalAmountSpent = (row.total_sales as number) ?? 0;
 			return {
-				email: (row.customer_email as string) ?? "",
+				customer: (row.customer_name as string) ?? "Unknown",
 				totalOrders,
 				totalAmountSpent,
-				averageOrderValue: totalOrders > 0 ? totalAmountSpent / totalOrders : 0,
+				averageOrderValue: totalOrders > 0 ? Math.round((totalAmountSpent / totalOrders) * 100) / 100 : 0,
 			};
 		});
 		return { customers, count: customers.length };
