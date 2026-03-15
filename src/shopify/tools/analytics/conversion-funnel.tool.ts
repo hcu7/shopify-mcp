@@ -7,8 +7,7 @@ export default defineTool({
 	name: "conversion_funnel",
 	domain: "analytics",
 	tier: 1,
-	description:
-		"Conversion funnel metrics: sessions, orders, and derived conversion rate (values in shop currency)",
+	description: "Conversion funnel metrics: sessions, orders, and derived conversion rate (values in shop currency)",
 	scopes: ["read_reports"],
 	input: {
 		start_date: z
@@ -22,7 +21,10 @@ export default defineTool({
 	},
 	handler: async (input: { start_date: string; end_date: string }, ctx: ExecutionContext) => {
 		const [salesResult, sessionsResult] = await Promise.all([
-			executeShopifyQL(`FROM sales SHOW orders, total_sales, customers SINCE ${input.start_date} UNTIL ${input.end_date}`, ctx),
+			executeShopifyQL(
+				`FROM sales SHOW orders, total_sales, customers SINCE ${input.start_date} UNTIL ${input.end_date}`,
+				ctx,
+			),
 			executeShopifyQL(`FROM sessions SHOW sessions SINCE ${input.start_date} UNTIL ${input.end_date}`, ctx),
 		]);
 

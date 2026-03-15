@@ -10,9 +10,7 @@ export default defineTool({
 	description: "Execute any ShopifyQL query for custom analytics and reporting",
 	scopes: ["read_reports"],
 	input: {
-		query: z
-			.string()
-			.describe('ShopifyQL query string, e.g. FROM sales SHOW total_sales SINCE -30d'),
+		query: z.string().describe("ShopifyQL query string, e.g. FROM sales SHOW total_sales SINCE -30d"),
 	},
 	handler: async (input: { query: string }, ctx: ExecutionContext) => {
 		const trimmed = input.query.trim();

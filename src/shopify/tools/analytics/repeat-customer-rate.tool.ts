@@ -31,8 +31,7 @@ export default defineTool({
 		// If orders > customers, the difference represents repeat orders
 		// repeatCustomers is an approximation: minimum of (orders - customers) and totalCustomers
 		const estimatedRepeatCustomers = Math.min(Math.max(0, totalOrders - totalCustomers), totalCustomers);
-		const repeatRate =
-			totalCustomers > 0 ? Math.round((estimatedRepeatCustomers / totalCustomers) * 10000) / 100 : 0;
+		const repeatRate = totalCustomers > 0 ? Math.round((estimatedRepeatCustomers / totalCustomers) * 10000) / 100 : 0;
 
 		return {
 			totalCustomers,

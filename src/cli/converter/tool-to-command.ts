@@ -152,7 +152,10 @@ export function coerceValue(value: unknown, schema: ZodType): unknown {
 				// fall through to comma split
 			}
 		}
-		return str.split(",").map((s: string) => s.trim()).filter(Boolean);
+		return str
+			.split(",")
+			.map((s: string) => s.trim())
+			.filter(Boolean);
 	}
 
 	if (typeName === "ZodObject") {
