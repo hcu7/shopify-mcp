@@ -1,3 +1,4 @@
+export { default as discountPerformance } from "./discount-performance.tool.js";
 export { default as inventoryRiskReport } from "./inventory-risk-report.tool.js";
 export { default as ordersByDateRange } from "./orders-by-date-range.tool.js";
 export { default as refundRateSummary } from "./refund-rate-summary.tool.js";
