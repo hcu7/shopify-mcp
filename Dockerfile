@@ -63,9 +63,9 @@ USER mcp
 # HTTP transport listens on this port
 EXPOSE 3000
 
-# Health check — hits the /health endpoint exposed by the HTTP transport.
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
-  CMD wget -qO- http://localhost:3000/health || exit 1
+# Health check disabled — Coolify manages container lifecycle.
+# HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
+#   CMD wget -qO- http://localhost:3000/health || exit 1
 
 # Default: start in HTTP mode so the container is reachable.
 # Override with `docker run ... cob-shopify-mcp start --transport stdio`
