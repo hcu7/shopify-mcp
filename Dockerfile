@@ -63,9 +63,6 @@ USER mcp
 # HTTP transport listens on this port
 EXPOSE 3000
 
-# Disable Docker-level health check; Coolify handles readiness via its own probes.
-HEALTHCHECK NONE
-
 # Default: start in HTTP mode so the container is reachable.
 # Override with `docker run ... cob-shopify-mcp start --transport stdio`
 # for stdio / Claude Desktop use-cases.
