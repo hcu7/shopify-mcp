@@ -18,15 +18,26 @@ function readBody(req: IncomingMessage): Promise<string> {
 const oauthCodes = new Map<string, number>();
 const oauthTokens = new Set<string>();
 
-function checkAuth(req: IncomingMessage): boolean {
+function auditLog(event: Record<string, unknown>): void {
+	const record = { ts: new Date().toISOString().replace(/\.\d+Z$/, "Z"), svc: "shopify-mcp", ...event };
+	process.stdout.write(`[MCP-AUDIT] ${JSON.stringify(record)}\n`);
+}
+
+function getClientIp(req: IncomingMessage): string {
+	const xff = req.headers["x-forwarded-for"];
+	if (typeof xff === "string") return xff.split(",")[0].trim();
+	return req.socket.remoteAddress || "";
+}
+
+function checkAuth(req: IncomingMessage): { ok: boolean; method: string } {
 	const token = process.env.MCP_AUTH_TOKEN;
 	const oauthClient = process.env.OAUTH_CLIENT_ID;
-	if (!token && !oauthClient) return true;
+	if (!token && !oauthClient) return { ok: true, method: "none-configured" };
 	const auth = req.headers["authorization"];
 	const bearer = typeof auth === "string" && auth.startsWith("Bearer ") ? auth.slice(7) : "";
-	if (token && bearer === token) return true;
-	if (oauthTokens.has(bearer)) return true;
-	return false;
+	if (token && bearer === token) return { ok: true, method: "bearer" };
+	if (oauthTokens.has(bearer)) return { ok: true, method: "oauth" };
+	return { ok: false, method: "none" };
 }
 
 export class HttpTransport implements TransportInstance {
@@ -102,7 +113,10 @@ export class HttpTransport implements TransportInstance {
 			}
 
 			// Auth check for all MCP requests
-			if (!checkAuth(req)) {
+			const clientIp = getClientIp(req);
+			const authResult = checkAuth(req);
+			if (!authResult.ok) {
+				auditLog({ event: "mcp_request", ip: clientIp, method: req.method, result: "401_unauthorized" });
 				res.writeHead(401, { "Content-Type": "application/json" });
 				res.end(JSON.stringify({ error: "Unauthorized" }));
 				return;
@@ -130,6 +144,22 @@ export class HttpTransport implements TransportInstance {
 					res.writeHead(400, { "Content-Type": "application/json" });
 					res.end(JSON.stringify({ jsonrpc: "2.0", error: { code: -32700, message: "Parse error" }, id: null }));
 					return;
+				}
+				if (body && typeof body === "object") {
+					const rpc = body as Record<string, unknown>;
+					const params = (rpc.params || {}) as Record<string, unknown>;
+					const info: Record<string, unknown> = {
+						event: "mcp_call", ip: clientIp, auth: authResult.method,
+						size: rawBody.length, rpc_method: rpc.method,
+					};
+					if (rpc.method === "tools/call") {
+						info.tool = params.name;
+						const args = (params.arguments || {}) as Record<string, unknown>;
+						info.arg_keys = args && typeof args === "object" ? Object.keys(args).sort() : [];
+					} else if (rpc.method === "initialize") {
+						info.client = ((params.clientInfo || {}) as Record<string, unknown>).name || "?";
+					}
+					auditLog(info);
 				}
 				await this.transport?.handleRequest(req, res, body);
 			} catch (err) {
