@@ -14,6 +14,21 @@ function readBody(req: IncomingMessage): Promise<string> {
 	});
 }
 
+// OAuth2 state (when OAUTH_CLIENT_ID is set)
+const oauthCodes = new Map<string, number>();
+const oauthTokens = new Set<string>();
+
+function checkAuth(req: IncomingMessage): boolean {
+	const token = process.env.MCP_AUTH_TOKEN;
+	const oauthClient = process.env.OAUTH_CLIENT_ID;
+	if (!token && !oauthClient) return true;
+	const auth = req.headers["authorization"];
+	const bearer = typeof auth === "string" && auth.startsWith("Bearer ") ? auth.slice(7) : "";
+	if (token && bearer === token) return true;
+	if (oauthTokens.has(bearer)) return true;
+	return false;
+}
+
 export class HttpTransport implements TransportInstance {
 	private httpServer: Server | null = null;
 	private transport: StreamableHTTPServerTransport | null = null;
@@ -40,6 +55,56 @@ export class HttpTransport implements TransportInstance {
 			if (req.method === "GET" && req.url === "/health") {
 				res.writeHead(200, { "Content-Type": "application/json" });
 				res.end(JSON.stringify({ status: "ok" }));
+				return;
+			}
+
+			// OAuth2 Authorization endpoint
+			const oauthClient = process.env.OAUTH_CLIENT_ID;
+			const oauthSecret = process.env.OAUTH_CLIENT_SECRET || "";
+			if (oauthClient && req.method === "GET" && req.url?.startsWith("/authorize")) {
+				const url = new URL(req.url, `http://localhost:${this.port}`);
+				if (url.searchParams.get("client_id") !== oauthClient || !url.searchParams.get("redirect_uri")) {
+					res.writeHead(400, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ error: "invalid_client" }));
+					return;
+				}
+				const code = crypto.randomUUID();
+				oauthCodes.set(code, Date.now() + 60_000);
+				const location = `${url.searchParams.get("redirect_uri")}?code=${code}&state=${encodeURIComponent(url.searchParams.get("state") || "")}`;
+				res.writeHead(302, { Location: location });
+				res.end();
+				return;
+			}
+			// OAuth2 Token endpoint
+			if (oauthClient && req.method === "POST" && req.url === "/token") {
+				const raw = await readBody(req);
+				const params = new URLSearchParams(raw);
+				if (params.get("client_id") !== oauthClient || params.get("client_secret") !== oauthSecret) {
+					res.writeHead(401, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ error: "invalid_client" }));
+					return;
+				}
+				const code = params.get("code") || "";
+				if (params.get("grant_type") === "authorization_code" && code) {
+					const exp = oauthCodes.get(code);
+					oauthCodes.delete(code);
+					if (!exp || Date.now() > exp) {
+						res.writeHead(400, { "Content-Type": "application/json" });
+						res.end(JSON.stringify({ error: "invalid_grant" }));
+						return;
+					}
+				}
+				const accessToken = crypto.randomUUID();
+				oauthTokens.add(accessToken);
+				res.writeHead(200, { "Content-Type": "application/json" });
+				res.end(JSON.stringify({ access_token: accessToken, token_type: "Bearer" }));
+				return;
+			}
+
+			// Auth check for all MCP requests
+			if (!checkAuth(req)) {
+				res.writeHead(401, { "Content-Type": "application/json" });
+				res.end(JSON.stringify({ error: "Unauthorized" }));
 				return;
 			}
 
