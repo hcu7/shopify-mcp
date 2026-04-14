@@ -109,33 +109,41 @@ export async function bootstrap(overrides?: DeepPartial<CobConfig>): Promise<voi
 		}
 	}
 
-	// 11. Create McpServer
-	const server = new McpServer({
-		name: "cob-shopify-mcp",
-		version: "1.0.0",
-	});
-
-	// 12. Register tools, resources, prompts
-	if (config.tools.advertise_and_activate) {
-		registerAdvertiser(server, registry, toolEngine, config, ctx);
-	} else {
-		registerTools(server, registry, toolEngine, config, ctx);
-	}
-
+	// 11. Build a fresh McpServer with all tools/resources/prompts registered.
+	//     Used directly for stdio, and as a per-session factory for HTTP
+	//     (workaround for modelcontextprotocol/typescript-sdk#1405 —
+	//      a single McpServer can only host one transport at a time).
 	const allResources = getAllResources();
-	registerResources(server, allResources, ctx);
-
 	const allPrompts = getAllPrompts();
-	registerPrompts(server, allPrompts);
+	const buildServer = async (): Promise<McpServer> => {
+		const server = new McpServer({
+			name: "cob-shopify-mcp",
+			version: "1.0.0",
+		});
+		if (config.tools.advertise_and_activate) {
+			registerAdvertiser(server, registry, toolEngine, config, ctx);
+		} else {
+			registerTools(server, registry, toolEngine, config, ctx);
+		}
+		registerResources(server, allResources, ctx);
+		registerPrompts(server, allPrompts);
+		return server;
+	};
 
-	// 13. Create and start transport
+	// 12. Create and start transport
 	const transport = createTransport({
 		type: config.transport.type,
 		httpPort: config.transport.port,
 		httpHost: config.transport.host,
 	});
 	try {
-		await transport.start(server);
+		if (config.transport.type === "http") {
+			// HTTP: pass factory so each client gets its own server+transport
+			await transport.start(buildServer);
+		} else {
+			// stdio: single client, build server once and pass it
+			await transport.start(await buildServer());
+		}
 	} catch (error) {
 		throw new Error(`Failed to start transport: ${error instanceof Error ? error.message : String(error)}`);
 	}
