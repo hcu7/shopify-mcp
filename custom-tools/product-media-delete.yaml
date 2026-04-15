@@ -1,0 +1,32 @@
+name: product_media_delete
+domain: products
+description: Delete one or more media items (images, videos) from a product.
+scopes:
+  - write_products
+input:
+  product_id:
+    type: string
+    description: Product GID (e.g. gid://shopify/Product/12345)
+    required: true
+  media_ids:
+    type: object
+    description: 'Array of MediaImage/Video GIDs to delete: ["gid://shopify/MediaImage/123", ...]'
+    required: true
+graphql: |
+  mutation ProductDeleteMedia($product_id: ID!, $media_ids: [ID!]!) {
+    productDeleteMedia(productId: $product_id, mediaIds: $media_ids) {
+      deletedMediaIds
+      deletedProductImageIds
+      product {
+        id
+        title
+      }
+      mediaUserErrors {
+        code
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.productDeleteMedia

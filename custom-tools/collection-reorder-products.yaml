@@ -1,0 +1,36 @@
+name: collection_reorder_products
+domain: products
+description: |
+  Change the display order of products within a manually-sorted collection.
+  Only works for collections with sortOrder = MANUAL. Positions are 0-indexed.
+  Returns an async job — poll job.done if you need to wait for completion.
+scopes:
+  - write_products
+input:
+  collection_id:
+    type: string
+    description: Collection GID (e.g. gid://shopify/Collection/67890)
+    required: true
+  moves:
+    type: object
+    description: |
+      Array of move instructions. Each: {
+        id: "gid://shopify/Product/12345",
+        newPosition: "0"                    # string, 0-indexed
+      }
+    required: true
+graphql: |
+  mutation CollectionReorderProducts($collection_id: ID!, $moves: [MoveInput!]!) {
+    collectionReorderProducts(id: $collection_id, moves: $moves) {
+      job {
+        id
+        done
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.collectionReorderProducts

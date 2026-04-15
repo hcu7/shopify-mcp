@@ -1,0 +1,85 @@
+name: product_update_full
+domain: products
+description: |
+  Extended product update — supports all fields the built-in update_product does not:
+  handle (URL slug), SEO title/description, tags, category, gift-card flag, template suffix.
+  Use this when you need to change a URL handle, set SEO metadata, or replace tags.
+  For simple title/description/vendor/status changes the built-in update_product is fine.
+scopes:
+  - write_products
+input:
+  id:
+    type: string
+    description: Product GID (e.g. gid://shopify/Product/12345)
+    required: true
+  title:
+    type: string
+    required: false
+  description_html:
+    type: string
+    description: HTML description body
+    required: false
+  vendor:
+    type: string
+    required: false
+  product_type:
+    type: string
+    required: false
+  handle:
+    type: string
+    description: URL slug (e.g. "my-product"). Must be unique within the store.
+    required: false
+  status:
+    type: enum
+    required: false
+    enum:
+      - ACTIVE
+      - DRAFT
+      - ARCHIVED
+  tags:
+    type: object
+    description: 'Array of tag strings — REPLACES all existing tags: ["sale", "new"]'
+    required: false
+  seo_title:
+    type: string
+    required: false
+  seo_description:
+    type: string
+    required: false
+  template_suffix:
+    type: string
+    description: Theme template suffix (e.g. "specialty" for product.specialty.liquid)
+    required: false
+  gift_card:
+    type: boolean
+    required: false
+  category_id:
+    type: string
+    description: Shopify taxonomy category GID (e.g. gid://shopify/TaxonomyCategory/aa-1-13-8)
+    required: false
+graphql: |
+  mutation ProductUpdateFull($input: ProductInput!) {
+    productUpdate(input: $input) {
+      product {
+        id
+        title
+        handle
+        vendor
+        productType
+        status
+        tags
+        descriptionHtml
+        templateSuffix
+        isGiftCard
+        category { id name }
+        seo { title description }
+        updatedAt
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.productUpdate

@@ -1,0 +1,61 @@
+name: product_media_create
+domain: products
+description: |
+  Attach one or more media items (images, videos) to a product via a public URL.
+  Shopify fetches the media from the URL — the source must be publicly reachable
+  (e.g. Dropbox direct link, Google Drive direct link, S3, CDN).
+  For uploading local files, use staged_uploads_create first to get a signed URL.
+scopes:
+  - write_products
+input:
+  product_id:
+    type: string
+    description: Product GID (e.g. gid://shopify/Product/12345)
+    required: true
+  media:
+    type: object
+    description: |
+      Array of media entries. Each: {
+        originalSource: "https://...",      # required, publicly fetchable URL
+        alt: "Alt text for accessibility",  # optional but recommended
+        mediaContentType: "IMAGE"           # IMAGE | VIDEO | EXTERNAL_VIDEO | MODEL_3D
+      }
+    required: true
+graphql: |
+  mutation ProductCreateMedia($product_id: ID!, $media: [CreateMediaInput!]!) {
+    productCreateMedia(productId: $product_id, media: $media) {
+      media {
+        ... on MediaImage {
+          id
+          alt
+          status
+          image { url width height }
+        }
+        ... on Video {
+          id
+          alt
+          status
+          sources { url mimeType format height width }
+        }
+        ... on ExternalVideo {
+          id
+          alt
+          embedUrl
+        }
+        ... on Model3d {
+          id
+          alt
+          sources { url mimeType format }
+        }
+        mediaContentType
+        mediaErrors { code details message }
+      }
+      mediaUserErrors { code field message }
+      product {
+        id
+        title
+      }
+    }
+  }
+response:
+  mapping: data.productCreateMedia

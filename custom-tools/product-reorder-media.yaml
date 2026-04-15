@@ -1,0 +1,37 @@
+name: product_reorder_media
+domain: products
+description: |
+  Change the display order of media items on a product. Positions are 0-indexed
+  (first image = 0). Only media IDs included in the moves list are repositioned;
+  others shift accordingly.
+scopes:
+  - write_products
+input:
+  product_id:
+    type: string
+    description: Product GID (e.g. gid://shopify/Product/12345)
+    required: true
+  moves:
+    type: object
+    description: |
+      Array of move instructions. Each: {
+        id: "gid://shopify/MediaImage/123",
+        newPosition: "0"                    # string, 0-indexed
+      }
+    required: true
+graphql: |
+  mutation ProductReorderMedia($product_id: ID!, $moves: [MoveInput!]!) {
+    productReorderMedia(id: $product_id, moves: $moves) {
+      job {
+        id
+        done
+      }
+      mediaUserErrors {
+        code
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.productReorderMedia

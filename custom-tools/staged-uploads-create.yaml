@@ -1,0 +1,42 @@
+name: staged_uploads_create
+domain: products
+description: |
+  Step 1 of uploading a local file to Shopify. Generates a signed upload target
+  (URL + parameters) that a client can POST the file to.
+  After successful upload, use the returned resourceUrl as originalSource in
+  product_media_create. Only needed for local-file uploads — for files already
+  reachable by URL, skip this and use product_media_create directly.
+scopes:
+  - write_products
+  - write_files
+input:
+  input:
+    type: object
+    description: |
+      Array of upload targets. Each: {
+        filename: "hero.jpg",           # original filename
+        mimeType: "image/jpeg",
+        resource: "IMAGE",              # IMAGE | VIDEO | FILE | MODEL_3D | PRODUCT_IMAGE
+        httpMethod: "POST",             # POST or PUT
+        fileSize: "102400"              # optional but recommended (bytes as string)
+      }
+    required: true
+graphql: |
+  mutation StagedUploadsCreate($input: [StagedUploadInput!]!) {
+    stagedUploadsCreate(input: $input) {
+      stagedTargets {
+        url
+        resourceUrl
+        parameters {
+          name
+          value
+        }
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.stagedUploadsCreate

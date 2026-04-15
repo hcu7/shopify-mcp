@@ -1,0 +1,51 @@
+name: product_variants_bulk_reorder
+domain: products
+description: |
+  Reorder the variants of a product. Positions are 1-indexed (first variant = 1).
+  Every variant must appear in the positions list.
+scopes:
+  - write_products
+input:
+  product_id:
+    type: string
+    description: Product GID (e.g. gid://shopify/Product/12345)
+    required: true
+  positions:
+    type: object
+    description: |
+      Array of variant positions. Each: {
+        id: "gid://shopify/ProductVariant/999",
+        position: 1                           # 1-indexed
+      }
+    required: true
+graphql: |
+  mutation ProductVariantsBulkReorder(
+    $product_id: ID!
+    $positions: [ProductVariantPositionInput!]!
+  ) {
+    productVariantsBulkReorder(
+      productId: $product_id
+      positions: $positions
+    ) {
+      product {
+        id
+        title
+        variants(first: 100) {
+          edges {
+            node {
+              id
+              title
+              position
+            }
+          }
+        }
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.productVariantsBulkReorder

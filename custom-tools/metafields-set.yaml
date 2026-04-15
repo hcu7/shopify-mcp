@@ -1,0 +1,48 @@
+name: metafields_set
+domain: products
+description: |
+  Create or update metafields on any resource (products, variants, customers, orders, collections, shop).
+  Works as upsert: if a metafield with the same ownerId/namespace/key exists, it's updated; otherwise created.
+  Up to 25 metafields per call.
+scopes:
+  - write_products
+  - write_customers
+  - write_orders
+  - write_metaobjects
+input:
+  metafields:
+    type: object
+    description: |
+      Array of metafield inputs (max 25). Each: {
+        ownerId: "gid://shopify/Product/12345",     # required — owning resource
+        namespace: "custom",                         # required — e.g. "custom", "global"
+        key: "material",                             # required — key within namespace
+        type: "single_line_text_field",              # required — metafield type
+        value: "Baumwolle"                           # required — stringified value (JSON for complex types)
+      }
+      Common types: single_line_text_field, multi_line_text_field, number_integer, number_decimal,
+      boolean, json, date, date_time, url, color, weight, dimension, rating, product_reference,
+      variant_reference, collection_reference, file_reference, metaobject_reference, list.single_line_text_field
+    required: true
+graphql: |
+  mutation MetafieldsSet($metafields: [MetafieldsSetInput!]!) {
+    metafieldsSet(metafields: $metafields) {
+      metafields {
+        id
+        namespace
+        key
+        value
+        type
+        ownerType
+        createdAt
+        updatedAt
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.metafieldsSet
