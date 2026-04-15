@@ -1,0 +1,32 @@
+name: collection_add_products
+domain: products
+description: |
+  Add one or more products to a MANUALLY-sorted collection. Does NOT work for
+  automatic (rule-based) collections — those add products via matching rules.
+  Returns a job that runs asynchronously for large batches.
+scopes:
+  - write_products
+input:
+  collection_id:
+    type: string
+    description: Collection GID (e.g. gid://shopify/Collection/67890)
+    required: true
+  product_ids:
+    type: object
+    description: 'Array of product GIDs to add: ["gid://shopify/Product/12345", ...]'
+    required: true
+graphql: |
+  mutation CollectionAddProductsV2($collection_id: ID!, $product_ids: [ID!]!) {
+    collectionAddProductsV2(id: $collection_id, productIds: $product_ids) {
+      job {
+        id
+        done
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.collectionAddProductsV2

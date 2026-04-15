@@ -1,0 +1,37 @@
+name: publishable_unpublish
+domain: products
+description: |
+  Unpublish a product (or any publishable resource) from one or more sales channels.
+  Product will no longer be visible in the removed channels. Doesn't delete the product.
+scopes:
+  - write_publications
+input:
+  id:
+    type: string
+    description: GID of the publishable resource (e.g. gid://shopify/Product/12345)
+    required: true
+  input:
+    type: object
+    description: |
+      Array of publications to unpublish from. Each: {
+        publicationId: "gid://shopify/Publication/987"
+      }
+    required: true
+graphql: |
+  mutation PublishableUnpublish($id: ID!, $input: [PublicationInput!]!) {
+    publishableUnpublish(id: $id, input: $input) {
+      publishable {
+        availablePublicationsCount { count }
+        resourcePublicationsCount { count }
+      }
+      shop {
+        name
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.publishableUnpublish

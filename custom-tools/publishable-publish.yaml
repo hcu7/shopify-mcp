@@ -1,0 +1,41 @@
+name: publishable_publish
+domain: products
+description: |
+  Publish a product (or any publishable resource like Collection) to one or more
+  sales channels. A product is only visible in the Online Store when it has a
+  publication for "Online Store". Works as upsert — already-published channels
+  stay published.
+scopes:
+  - write_publications
+input:
+  id:
+    type: string
+    description: GID of the publishable resource (Product, Collection, etc.) e.g. gid://shopify/Product/12345
+    required: true
+  input:
+    type: object
+    description: |
+      Array of publication targets. Each: {
+        publicationId: "gid://shopify/Publication/987",
+        publishDate: "2026-04-15T12:00:00Z"    # optional — for scheduled publish
+      }
+      Get publication IDs via list_publications.
+    required: true
+graphql: |
+  mutation PublishablePublish($id: ID!, $input: [PublicationInput!]!) {
+    publishablePublish(id: $id, input: $input) {
+      publishable {
+        availablePublicationsCount { count }
+        resourcePublicationsCount { count }
+      }
+      shop {
+        name
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.publishablePublish

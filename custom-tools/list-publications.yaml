@@ -1,0 +1,31 @@
+name: list_publications
+domain: products
+description: |
+  List all publications (sales channels) of the shop — e.g. "Online Store",
+  "Point of Sale", "Shop", "Google & YouTube", etc. Returns the publication GIDs
+  needed for publishable_publish / publishable_unpublish.
+  Usually you want to publish new products to the "Online Store" publication.
+scopes:
+  - read_publications
+input:
+  limit:
+    type: number
+    description: Max number of publications to return (default 50)
+    required: false
+    min: 1
+    max: 250
+    default: 50
+graphql: |
+  query ListPublications($limit: Int) {
+    publications(first: $limit) {
+      edges {
+        node {
+          id
+          name
+          supportsFuturePublishing
+        }
+      }
+    }
+  }
+response:
+  mapping: data.publications

@@ -1,0 +1,54 @@
+name: list_locations
+domain: inventory
+description: |
+  List all locations (warehouses, stores, POS) of the shop. Returns the location
+  GIDs needed for inventory operations (inventory_activate, set_inventory_level, etc.).
+  Fulfillment service locations are included unless explicitly excluded.
+scopes:
+  - read_locations
+input:
+  limit:
+    type: number
+    description: Max number of locations to return (default 50)
+    required: false
+    min: 1
+    max: 250
+    default: 50
+  include_inactive:
+    type: boolean
+    description: Include deactivated locations (default false)
+    required: false
+    default: false
+  include_legacy:
+    type: boolean
+    description: Include legacy locations (default false)
+    required: false
+    default: false
+graphql: |
+  query ListLocations($limit: Int, $include_inactive: Boolean, $include_legacy: Boolean) {
+    locations(
+      first: $limit
+      includeInactive: $include_inactive
+      includeLegacy: $include_legacy
+    ) {
+      edges {
+        node {
+          id
+          name
+          isActive
+          fulfillsOnlineOrders
+          shipsInventory
+          address {
+            address1
+            address2
+            city
+            zip
+            country
+            countryCode
+          }
+        }
+      }
+    }
+  }
+response:
+  mapping: data.locations

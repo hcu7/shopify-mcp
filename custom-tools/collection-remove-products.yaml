@@ -1,0 +1,29 @@
+name: collection_remove_products
+domain: products
+description: Remove one or more products from a manual collection.
+scopes:
+  - write_products
+input:
+  collection_id:
+    type: string
+    description: Collection GID (e.g. gid://shopify/Collection/67890)
+    required: true
+  product_ids:
+    type: object
+    description: 'Array of product GIDs to remove: ["gid://shopify/Product/12345", ...]'
+    required: true
+graphql: |
+  mutation CollectionRemoveProducts($collection_id: ID!, $product_ids: [ID!]!) {
+    collectionRemoveProducts(id: $collection_id, productIds: $product_ids) {
+      job {
+        id
+        done
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.collectionRemoveProducts

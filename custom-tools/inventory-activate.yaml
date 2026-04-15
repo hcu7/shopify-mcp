@@ -1,0 +1,60 @@
+name: inventory_activate
+domain: inventory
+description: |
+  Activate an inventory item at a specific location so the variant can be stocked
+  and sold from that location. Use this after creating a new variant to make it
+  trackable at Hive/Hohwisch/any other location. Set available=0 if the actual
+  stock is not yet known — that way the variant exists at the location with 0 on hand.
+  Returns the new inventory level.
+scopes:
+  - write_inventory
+input:
+  inventory_item_id:
+    type: string
+    description: |
+      InventoryItem GID (e.g. gid://shopify/InventoryItem/44556).
+      Get it via get_product_variant → inventoryItem.id or list_product_variants.
+    required: true
+  location_id:
+    type: string
+    description: Location GID (e.g. gid://shopify/Location/12345). Get via list_locations.
+    required: true
+  available:
+    type: number
+    description: Initial available quantity. Use 0 if stock is unknown yet.
+    required: false
+    default: 0
+graphql: |
+  mutation InventoryActivate(
+    $inventory_item_id: ID!
+    $location_id: ID!
+    $available: Int
+  ) {
+    inventoryActivate(
+      inventoryItemId: $inventory_item_id
+      locationId: $location_id
+      available: $available
+    ) {
+      inventoryLevel {
+        id
+        quantities(names: ["available", "on_hand", "committed"]) {
+          name
+          quantity
+        }
+        location {
+          id
+          name
+        }
+        item {
+          id
+          sku
+        }
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.inventoryActivate
