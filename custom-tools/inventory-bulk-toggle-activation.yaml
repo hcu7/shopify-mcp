@@ -1,31 +1,33 @@
 name: inventory_bulk_toggle_activation
 domain: inventory
 description: |
-  Activate or deactivate multiple inventory items at a single location in one call.
-  Use this to bulk-activate all new variants at Hive + Hohwisch locations after
-  creating variants. Newly-activated items start at 0 on hand.
+  Activate or deactivate a single inventory item at multiple locations in one call.
+  Use this after creating a variant to make it trackable at Hive + Hohwisch (or any
+  set of locations) in one request. Newly-activated items start at 0 on hand.
+  For multiple items across the same locations, call once per item.
 scopes:
   - write_inventory
 input:
-  location_id:
+  inventory_item_id:
     type: string
-    description: Location GID (e.g. gid://shopify/Location/12345). Get via list_locations.
+    description: InventoryItem GID (e.g. gid://shopify/InventoryItem/44556)
     required: true
   inventory_item_updates:
     type: object
     description: |
-      Array of activation changes. Each: {
-        inventoryItemId: "gid://shopify/InventoryItem/44556",
-        activate: true                       # true = activate, false = deactivate
+      Array of location-specific activation changes. Each: {
+        locationId: "gid://shopify/Location/12345",
+        activate: true,                    # true = activate, false = deactivate
+        available: 0                       # optional initial quantity
       }
     required: true
 graphql: |
   mutation InventoryBulkToggleActivation(
-    $location_id: ID!
+    $inventory_item_id: ID!
     $inventory_item_updates: [InventoryBulkToggleActivationInput!]!
   ) {
     inventoryBulkToggleActivation(
-      locationId: $location_id
+      inventoryItemId: $inventory_item_id
       inventoryItemUpdates: $inventory_item_updates
     ) {
       inventoryLevels {
