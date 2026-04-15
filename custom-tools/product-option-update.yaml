@@ -1,0 +1,94 @@
+name: product_option_update
+domain: products
+description: |
+  Update an existing product option — rename it, change position, or add/update/delete option values
+  (e.g. add size "XL" to an existing "Größe" option). For adding a completely new option to a product,
+  use product_options_create instead.
+scopes:
+  - write_products
+input:
+  product_id:
+    type: string
+    description: Product GID (e.g. gid://shopify/Product/12345)
+    required: true
+  option:
+    type: object
+    description: |
+      Option to update. Must include the option id: { id: "gid://shopify/ProductOption/123", name: "Größe", position: 1 }.
+      Name and position are optional.
+    required: true
+  option_values_to_add:
+    type: object
+    description: 'Array of new values to add: [{ name: "XL" }, { name: "XXL" }].'
+    required: false
+  option_values_to_update:
+    type: object
+    description: 'Array of values to rename: [{ id: "gid://shopify/ProductOptionValue/9", name: "Small" }].'
+    required: false
+  option_values_to_delete:
+    type: object
+    description: 'Array of option-value GIDs to delete: ["gid://shopify/ProductOptionValue/9"].'
+    required: false
+  variant_strategy:
+    type: enum
+    description: |
+      LEAVE_AS_IS = keep variants unchanged.
+      MANAGE = Shopify reconciles variants (deletes variants whose value was removed, creates variants for new values).
+    required: false
+    enum:
+      - LEAVE_AS_IS
+      - MANAGE
+    default: MANAGE
+graphql: |
+  mutation ProductOptionUpdate(
+    $product_id: ID!
+    $option: OptionUpdateInput!
+    $option_values_to_add: [OptionValueCreateInput!]
+    $option_values_to_update: [OptionValueUpdateInput!]
+    $option_values_to_delete: [ID!]
+    $variant_strategy: ProductOptionUpdateVariantStrategy
+  ) {
+    productOptionUpdate(
+      productId: $product_id
+      option: $option
+      optionValuesToAdd: $option_values_to_add
+      optionValuesToUpdate: $option_values_to_update
+      optionValuesToDelete: $option_values_to_delete
+      variantStrategy: $variant_strategy
+    ) {
+      product {
+        id
+        title
+        options {
+          id
+          name
+          position
+          optionValues {
+            id
+            name
+            hasVariants
+          }
+        }
+        variants(first: 100) {
+          edges {
+            node {
+              id
+              title
+              sku
+              selectedOptions {
+                name
+                value
+              }
+            }
+          }
+        }
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.productOptionUpdate

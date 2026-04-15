@@ -55,6 +55,11 @@ COPY --from=builder /prod/node_modules ./node_modules
 # Copy package.json so Node can resolve the "type": "module" field
 COPY --from=builder /build/package.json ./package.json
 
+# Bundle custom YAML tools into the image so they are available on platforms
+# (e.g. Coolify) that don't mount ./custom-tools as a volume.
+COPY custom-tools ./custom-tools
+ENV COB_SHOPIFY_CUSTOM_TOOLS=/app/custom-tools
+
 # Data directory for JSON/SQLite storage; mount a named volume here in prod
 RUN mkdir -p /app/data && chown mcp:mcp /app/data
 

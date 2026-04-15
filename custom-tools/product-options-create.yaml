@@ -1,0 +1,80 @@
+name: product_options_create
+domain: products
+description: |
+  Add one or more options (e.g. "Größe", "Farbe") to an existing product that currently has no options
+  or needs additional options. Use variant_strategy="CREATE" to generate variants for every combination,
+  or "LEAVE_AS_IS" to keep existing variants and attach option values manually later. This is the correct
+  mutation when converting a single-variant product into a multi-variant one.
+scopes:
+  - write_products
+input:
+  product_id:
+    type: string
+    description: Product GID (e.g. gid://shopify/Product/12345)
+    required: true
+  options:
+    type: object
+    description: |
+      Array of options to create. Each entry: { name: "Größe", position: 1, values: [{name: "S"}, {name: "M"}, {name: "L"}] }.
+      Position is optional; values is required (at least one).
+    required: true
+  variant_strategy:
+    type: enum
+    description: |
+      CREATE = auto-create variants for every option-value combination (use when product has only the default variant).
+      LEAVE_AS_IS = keep existing variants unchanged (you'll assign option values via product_variants_bulk_update afterwards).
+      MANAGE = Shopify manages reconciliation.
+    required: false
+    enum:
+      - CREATE
+      - LEAVE_AS_IS
+      - MANAGE
+    default: CREATE
+graphql: |
+  mutation ProductOptionsCreate(
+    $product_id: ID!
+    $options: [OptionCreateInput!]!
+    $variant_strategy: ProductOptionCreateVariantStrategy
+  ) {
+    productOptionsCreate(
+      productId: $product_id
+      options: $options
+      variantStrategy: $variant_strategy
+    ) {
+      product {
+        id
+        title
+        options {
+          id
+          name
+          position
+          values
+          optionValues {
+            id
+            name
+            hasVariants
+          }
+        }
+        variants(first: 100) {
+          edges {
+            node {
+              id
+              title
+              sku
+              selectedOptions {
+                name
+                value
+              }
+            }
+          }
+        }
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.productOptionsCreate

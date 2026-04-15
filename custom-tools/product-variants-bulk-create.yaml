@@ -1,0 +1,82 @@
+name: product_variants_bulk_create
+domain: products
+description: |
+  Create multiple variants for a product in a single call. Use this after product_options_create with
+  variant_strategy=LEAVE_AS_IS, or to add new variants to an existing multi-variant product.
+  Each variant must include optionValues that match the product's options.
+scopes:
+  - write_products
+input:
+  product_id:
+    type: string
+    description: Product GID (e.g. gid://shopify/Product/12345)
+    required: true
+  variants:
+    type: object
+    description: |
+      Array of variants. Each entry: {
+        optionValues: [{ optionName: "Größe", name: "M" }],
+        price: "29.90",
+        sku: "SKU-M",
+        barcode: "...",
+        compareAtPrice: "39.90",
+        inventoryPolicy: "DENY" | "CONTINUE",
+        inventoryItem: { sku, tracked, measurement, ... }
+      }
+      Only optionValues is strictly required.
+    required: true
+  strategy:
+    type: enum
+    description: |
+      DEFAULT = fail if a variant with the same option combination already exists.
+      REMOVE_STANDALONE_VARIANT = also removes the product's default "Default Title" variant
+      (use this right after converting a no-option product to having options).
+    required: false
+    enum:
+      - DEFAULT
+      - REMOVE_STANDALONE_VARIANT
+    default: REMOVE_STANDALONE_VARIANT
+graphql: |
+  mutation ProductVariantsBulkCreate(
+    $product_id: ID!
+    $variants: [ProductVariantsBulkInput!]!
+    $strategy: ProductVariantsBulkCreateStrategy
+  ) {
+    productVariantsBulkCreate(
+      productId: $product_id
+      variants: $variants
+      strategy: $strategy
+    ) {
+      product {
+        id
+        title
+        options {
+          name
+          optionValues {
+            id
+            name
+          }
+        }
+      }
+      productVariants {
+        id
+        title
+        sku
+        price
+        compareAtPrice
+        barcode
+        inventoryPolicy
+        selectedOptions {
+          name
+          value
+        }
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.productVariantsBulkCreate

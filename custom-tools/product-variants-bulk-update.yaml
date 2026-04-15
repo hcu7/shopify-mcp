@@ -1,0 +1,60 @@
+name: product_variants_bulk_update
+domain: products
+description: |
+  Update multiple existing variants of a product in a single call — change prices, SKUs, barcodes,
+  inventory policy, or reassign option values. Each variant entry must include its GID.
+scopes:
+  - write_products
+input:
+  product_id:
+    type: string
+    description: Product GID (e.g. gid://shopify/Product/12345)
+    required: true
+  variants:
+    type: object
+    description: |
+      Array of variant updates. Each entry: {
+        id: "gid://shopify/ProductVariant/999",           # required
+        price: "34.90",
+        compareAtPrice: "44.90",
+        sku: "SKU-L",
+        barcode: "...",
+        inventoryPolicy: "DENY" | "CONTINUE",
+        optionValues: [{ optionName: "Größe", name: "L" }]
+      }
+    required: true
+graphql: |
+  mutation ProductVariantsBulkUpdate(
+    $product_id: ID!
+    $variants: [ProductVariantsBulkInput!]!
+  ) {
+    productVariantsBulkUpdate(
+      productId: $product_id
+      variants: $variants
+    ) {
+      product {
+        id
+        title
+      }
+      productVariants {
+        id
+        title
+        sku
+        price
+        compareAtPrice
+        barcode
+        inventoryPolicy
+        selectedOptions {
+          name
+          value
+        }
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.productVariantsBulkUpdate
