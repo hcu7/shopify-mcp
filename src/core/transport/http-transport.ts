@@ -1,9 +1,49 @@
 import crypto from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import type { AddressInfo } from "node:net";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import type { ServerFactory, TransportInstance } from "./types.js";
+
+// Path where the Shopify install-flow persists the merchant-granted
+// Admin API access token. Client-credentials auth falls back to reading
+// this file so that scope upgrades from the install flow take effect
+// without needing a static_token redeploy.
+const INSTALLED_TOKEN_FILE = process.env.SHOPIFY_INSTALLED_TOKEN_FILE
+	|| "/app/data/installed-token.json";
+
+// Verify Shopify's HMAC on install / callback query strings.
+// All query params except `hmac` are concatenated as `k=v&k=v&...` (sorted),
+// then HMAC-SHA256'd with the app's client secret.
+function verifyShopifyHmac(queryString: string, secret: string): boolean {
+	const params = new URLSearchParams(queryString);
+	const hmac = params.get("hmac");
+	if (!hmac) return false;
+	params.delete("hmac");
+	params.delete("signature");
+	const sortedKeys = Array.from(params.keys()).sort();
+	const canonical = sortedKeys.map((k) => `${k}=${params.get(k)}`).join("&");
+	const expected = crypto
+		.createHmac("sha256", secret)
+		.update(canonical)
+		.digest("hex");
+	try {
+		return crypto.timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(hmac, "hex"));
+	} catch {
+		return false;
+	}
+}
+
+function persistInstalledToken(shop: string, accessToken: string, scope: string): void {
+	const payload = { shop, access_token: accessToken, scope, installedAt: new Date().toISOString() };
+	const dir = path.dirname(INSTALLED_TOKEN_FILE);
+	try {
+		fs.mkdirSync(dir, { recursive: true });
+	} catch {}
+	fs.writeFileSync(INSTALLED_TOKEN_FILE, JSON.stringify(payload, null, 2));
+}
 
 function readBody(req: IncomingMessage): Promise<string> {
 	return new Promise((resolve, reject) => {
@@ -117,6 +157,144 @@ export class HttpTransport implements TransportInstance {
 				res.writeHead(200, { "Content-Type": "application/json" });
 				res.end(JSON.stringify({ status: "ok" }));
 				return;
+			}
+
+			// -----------------------------------------------------------------
+			// Shopify install flow
+			//   Shopify Partners "App URL"      → /shopify/install
+			//   Shopify Partners "Redirect URL" → /shopify/callback
+			// The install handler redirects to Shopify's /admin/oauth/authorize;
+			// the callback handler exchanges the returned code for an Admin API
+			// access token and persists it. client-credentials.ts then prefers
+			// this token so scope changes from the install flow take effect.
+			// -----------------------------------------------------------------
+			const shopifyClientId = process.env.SHOPIFY_CLIENT_ID || "";
+			const shopifyClientSecret = process.env.SHOPIFY_CLIENT_SECRET || "";
+			const shopifyScopes = process.env.SHOPIFY_SCOPES || [
+				"read_products", "write_products",
+				"read_orders", "write_orders", "read_all_orders",
+				"read_draft_orders", "write_draft_orders",
+				"read_customers", "write_customers",
+				"read_inventory", "write_inventory",
+				"read_locations",
+				"read_publications", "write_publications",
+				"read_files", "write_files",
+				"read_metaobjects", "write_metaobjects",
+				"read_metaobject_definitions", "write_metaobject_definitions",
+				"read_fulfillments", "write_fulfillments",
+				"read_assigned_fulfillment_orders", "write_assigned_fulfillment_orders",
+				"read_merchant_managed_fulfillment_orders", "write_merchant_managed_fulfillment_orders",
+				"read_third_party_fulfillment_orders", "write_third_party_fulfillment_orders",
+				"read_shipping",
+				"read_reports",
+				"read_legal_policies",
+				"read_discounts", "write_discounts",
+				"read_content", "write_content",
+				"read_translations", "write_translations",
+				"read_marketing_events", "write_marketing_events",
+				"read_gift_cards", "write_gift_cards",
+				"read_price_rules", "write_price_rules",
+			].join(",");
+
+			// GET /shopify/install?shop=foo.myshopify.com → redirect to Shopify authorize
+			if (req.method === "GET" && req.url?.startsWith("/shopify/install")) {
+				const url = new URL(req.url, `http://localhost:${this.port}`);
+				const shop = url.searchParams.get("shop") || "";
+				const clientIp = getClientIp(req);
+				if (!shop || !/^[a-z0-9][a-z0-9-]*\.myshopify\.com$/i.test(shop)) {
+					auditLog({ event: "shopify_install", ip: clientIp, result: "invalid_shop", shop });
+					res.writeHead(400, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ error: "Missing or invalid shop parameter" }));
+					return;
+				}
+				if (!shopifyClientId) {
+					auditLog({ event: "shopify_install", ip: clientIp, result: "misconfigured" });
+					res.writeHead(500, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ error: "SHOPIFY_CLIENT_ID not configured" }));
+					return;
+				}
+				// Shopify signs the install-entry request too — validate when present.
+				const qs = (req.url.split("?")[1] || "");
+				if (qs.includes("hmac=") && !verifyShopifyHmac(qs, shopifyClientSecret)) {
+					auditLog({ event: "shopify_install", ip: clientIp, result: "hmac_mismatch", shop });
+					res.writeHead(401, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ error: "HMAC validation failed" }));
+					return;
+				}
+				const host = req.headers.host || "";
+				const redirectUri = `https://${host}/shopify/callback`;
+				const state = crypto.randomUUID();
+				const authorizeUrl = `https://${shop}/admin/oauth/authorize`
+					+ `?client_id=${encodeURIComponent(shopifyClientId)}`
+					+ `&scope=${encodeURIComponent(shopifyScopes)}`
+					+ `&redirect_uri=${encodeURIComponent(redirectUri)}`
+					+ `&state=${encodeURIComponent(state)}`;
+				auditLog({ event: "shopify_install", ip: clientIp, result: "redirect_to_authorize",
+					shop, redirect_uri: redirectUri });
+				res.writeHead(302, { Location: authorizeUrl });
+				res.end();
+				return;
+			}
+
+			// GET /shopify/callback?code=...&shop=...&hmac=... → exchange + persist
+			if (req.method === "GET" && req.url?.startsWith("/shopify/callback")) {
+				const clientIp = getClientIp(req);
+				const qs = req.url.split("?")[1] || "";
+				const url = new URL(req.url, `http://localhost:${this.port}`);
+				const shop = url.searchParams.get("shop") || "";
+				const code = url.searchParams.get("code") || "";
+				if (!shop || !code) {
+					auditLog({ event: "shopify_callback", ip: clientIp, result: "missing_params", shop });
+					res.writeHead(400, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ error: "Missing shop or code" }));
+					return;
+				}
+				if (!verifyShopifyHmac(qs, shopifyClientSecret)) {
+					auditLog({ event: "shopify_callback", ip: clientIp, result: "hmac_mismatch", shop });
+					res.writeHead(401, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ error: "HMAC validation failed" }));
+					return;
+				}
+				try {
+					const tokenUrl = `https://${shop}/admin/oauth/access_token`;
+					const tokenRes = await fetch(tokenUrl, {
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify({
+							client_id: shopifyClientId,
+							client_secret: shopifyClientSecret,
+							code,
+						}),
+					});
+					if (!tokenRes.ok) {
+						const body = await tokenRes.text();
+						auditLog({ event: "shopify_callback", ip: clientIp, result: "token_exchange_failed",
+							shop, status: tokenRes.status });
+						res.writeHead(502, { "Content-Type": "application/json" });
+						res.end(JSON.stringify({ error: "Token exchange failed", detail: body }));
+						return;
+					}
+					const data = await tokenRes.json() as { access_token: string; scope?: string };
+					persistInstalledToken(shop, data.access_token, data.scope || "");
+					auditLog({ event: "shopify_callback", ip: clientIp, result: "installed",
+						shop, scope_len: (data.scope || "").length });
+					res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" });
+					res.end(`<!doctype html>
+<html><head><meta charset="utf-8"><title>Shopify MCP — Install complete</title>
+<style>body{font-family:system-ui;max-width:640px;margin:4rem auto;padding:0 1rem;color:#111}
+h1{color:#0a7c42}code{background:#f4f4f5;padding:2px 6px;border-radius:4px}</style></head>
+<body><h1>✓ Installation erfolgreich</h1>
+<p>Access Token für <code>${shop}</code> wurde gespeichert. Scopes: <code>${data.scope || "(none)"}</code>.</p>
+<p>Der MCP zieht den neuen Token automatisch beim nächsten Tool-Call. Container-Restart nicht nötig.</p>
+<p>Du kannst dieses Fenster schließen.</p></body></html>`);
+					return;
+				} catch (err) {
+					const msg = err instanceof Error ? err.message : String(err);
+					auditLog({ event: "shopify_callback", ip: clientIp, result: "exception", shop, err: msg });
+					res.writeHead(500, { "Content-Type": "application/json" });
+					res.end(JSON.stringify({ error: "Internal error during install" }));
+					return;
+				}
 			}
 
 			const oauthClient = process.env.OAUTH_CLIENT_ID;
