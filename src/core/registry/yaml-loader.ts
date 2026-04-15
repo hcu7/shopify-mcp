@@ -48,13 +48,36 @@ function convertInputType(field: YamlInputField): ZodType {
 			schema = z.enum(field.enum as [string, ...string[]]);
 			break;
 		case "array":
-			schema = z.array(z.any());
+			// Auto-parse JSON strings so clients that pass "[{...}]" as a
+			// stringified argument (e.g. some MCP clients over-stringify
+			// structured params) still reach GraphQL as a real array.
+			schema = z.preprocess((val) => {
+				if (typeof val === "string") {
+					try {
+						const parsed = JSON.parse(val);
+						return parsed;
+					} catch {
+						return val;
+					}
+				}
+				return val;
+			}, z.array(z.any()));
 			break;
 		case "object":
 			// Accepts either a plain object/record or an array (YAML authors often use
 			// "object" to mean "structured JSON — array or record"). Keeps schemas
-			// permissive; the GraphQL layer enforces the real shape.
-			schema = z.any();
+			// permissive; the GraphQL layer enforces the real shape. Also auto-parses
+			// JSON strings for stringify-happy clients.
+			schema = z.preprocess((val) => {
+				if (typeof val === "string") {
+					try {
+						return JSON.parse(val);
+					} catch {
+						return val;
+					}
+				}
+				return val;
+			}, z.any());
 			break;
 		default:
 			schema = z.string();
