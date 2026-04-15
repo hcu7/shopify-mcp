@@ -60,8 +60,13 @@ COPY --from=builder /build/package.json ./package.json
 COPY custom-tools ./custom-tools
 ENV COB_SHOPIFY_CUSTOM_TOOLS=/app/custom-tools
 
-# Data directory for JSON/SQLite storage; mount a named volume here in prod
+# Data directory for JSON/SQLite storage AND the Shopify install-flow token
+# (/app/data/installed-token.json). MUST be backed by a persistent volume in
+# production — otherwise the merchant-granted token is lost on container
+# rebuild and the app has to be re-installed in Shopify. In Coolify: add
+# a persistent storage mount on "/app/data" in the application's Storage tab.
 RUN mkdir -p /app/data && chown mcp:mcp /app/data
+VOLUME ["/app/data"]
 
 USER mcp
 
