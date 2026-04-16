@@ -1,0 +1,55 @@
+name: metafield_definition_create
+domain: products
+description: |
+  Create a metafield definition on Shopify (e.g. for Product, Variant, Customer).
+  Definitions are prerequisites for theme editors like Venue to show metafields
+  in the "Dynamic content" picker. Once created, existing metafield values stay
+  untouched but gain schema validation and admin-UI visibility.
+scopes:
+  - write_products
+input:
+  definition:
+    type: object
+    description: |
+      MetafieldDefinitionInput object. Typical shape:
+      {
+        namespace: "custom",
+        key: "hero_subtitle",
+        name: "Hero Subtitle",
+        ownerType: "PRODUCT",          # PRODUCT | PRODUCTVARIANT | COLLECTION | CUSTOMER | ORDER
+        type: "single_line_text_field", # e.g. single_line_text_field, multi_line_text_field, rich_text_field, list.single_line_text_field
+        description: "Shown under the product title",
+        pin: true,                      # pin to product admin card
+        access: {                       # optional, controls API visibility
+          admin: "MERCHANT_READ_WRITE",
+          storefront: "PUBLIC_READ"
+        }
+      }
+    required: true
+graphql: |
+  mutation MetafieldDefinitionCreate($definition: MetafieldDefinitionInput!) {
+    metafieldDefinitionCreate(definition: $definition) {
+      createdDefinition {
+        id
+        namespace
+        key
+        name
+        ownerType
+        type {
+          name
+        }
+        pinnedPosition
+        access {
+          admin
+          storefront
+        }
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.metafieldDefinitionCreate
