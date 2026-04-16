@@ -1,0 +1,31 @@
+name: metafield_definition_delete
+domain: products
+description: |
+  Delete a metafield definition. Optionally deletes all values of that metafield
+  across products/resources (deleteAllAssociatedMetafields=true). Use carefully —
+  destructive and not reversible (definition + values are gone).
+scopes:
+  - write_products
+input:
+  id:
+    type: string
+    description: Metafield Definition GID (e.g. gid://shopify/MetafieldDefinition/12345)
+    required: true
+  deleteAllAssociatedMetafields:
+    type: boolean
+    description: If true, also deletes every metafield value that was backed by this definition.
+    required: false
+    default: false
+graphql: |
+  mutation MetafieldDefinitionDelete($id: ID!, $deleteAllAssociatedMetafields: Boolean) {
+    metafieldDefinitionDelete(id: $id, deleteAllAssociatedMetafields: $deleteAllAssociatedMetafields) {
+      deletedDefinitionId
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.metafieldDefinitionDelete
