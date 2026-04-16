@@ -1,0 +1,51 @@
+name: metafield_definition_update
+domain: products
+description: |
+  Update an existing metafield definition — rename, change description, pin/unpin,
+  toggle Admin/Storefront access, adjust validations. Identify the definition
+  via namespace + key + ownerType, or via the definition GID.
+scopes:
+  - write_products
+input:
+  definition:
+    type: object
+    description: |
+      MetafieldDefinitionUpdateInput. Identify with namespace + key + ownerType.
+      Example: {
+        namespace: "custom",
+        key: "tab_features",
+        ownerType: "PRODUCT",
+        name: "Features",
+        description: "…",
+        pin: true,
+        access: {
+          admin: "MERCHANT_READ_WRITE",
+          storefront: "PUBLIC_READ"
+        }
+      }
+    required: true
+graphql: |
+  mutation MetafieldDefinitionUpdate($definition: MetafieldDefinitionUpdateInput!) {
+    metafieldDefinitionUpdate(definition: $definition) {
+      updatedDefinition {
+        id
+        namespace
+        key
+        name
+        ownerType
+        type { name }
+        pinnedPosition
+        access {
+          admin
+          storefront
+        }
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.metafieldDefinitionUpdate
