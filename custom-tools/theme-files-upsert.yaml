@@ -1,0 +1,43 @@
+name: theme_files_upsert
+domain: products
+description: |
+  Create or update one or more theme files (liquid, CSS, JSON, JS) via GraphQL.
+  Used for direct theme customization without the Shopify Admin UI.
+  Each file needs filename + body.value (text content).
+scopes:
+  - write_themes
+input:
+  theme_id:
+    type: string
+    description: Theme GID (e.g. gid://shopify/OnlineStoreTheme/181167194491)
+    required: true
+  files:
+    type: object
+    description: |
+      Array of files to upsert. Each: {
+        filename: "assets/custom.css",
+        body: {
+          type: "TEXT",
+          value: "body { line-height: 1.3; }"
+        }
+      }
+      type can be "TEXT" for plain files or "BASE64" for binary.
+    required: true
+graphql: |
+  mutation ThemeFilesUpsert($theme_id: ID!, $files: [OnlineStoreThemeFilesUpsertFileInput!]!) {
+    themeFilesUpsert(themeId: $theme_id, files: $files) {
+      upsertedThemeFiles {
+        filename
+        size
+        checksumMd5
+      }
+      userErrors {
+        field
+        message
+        code
+        filename
+      }
+    }
+  }
+response:
+  mapping: data.themeFilesUpsert

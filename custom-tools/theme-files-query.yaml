@@ -1,0 +1,53 @@
+name: theme_files_query
+domain: products
+description: |
+  Query files in a Shopify theme. Returns file content + metadata.
+  Use filename pattern like "config/*.json" or "assets/*.css".
+scopes:
+  - read_themes
+input:
+  theme_id:
+    type: string
+    description: Theme GID (e.g. gid://shopify/OnlineStoreTheme/181167194491)
+    required: true
+  filenames:
+    type: object
+    description: |
+      Array of filename patterns. Supports wildcards.
+      Examples: ["config/settings_data.json"], ["assets/base.css"], ["templates/product.json"]
+    required: true
+  limit:
+    type: number
+    description: Max files to return
+    required: false
+    default: 10
+graphql: |
+  query ThemeFiles($theme_id: ID!, $filenames: [String!], $limit: Int) {
+    theme(id: $theme_id) {
+      id
+      name
+      files(filenames: $filenames, first: $limit) {
+        edges {
+          node {
+            filename
+            size
+            checksumMd5
+            contentType
+            body {
+              ... on OnlineStoreThemeFileBodyText {
+                content
+              }
+              ... on OnlineStoreThemeFileBodyBase64 {
+                contentBase64
+              }
+              ... on OnlineStoreThemeFileBodyUrl {
+                url
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+response:
+  mapping: data.theme
