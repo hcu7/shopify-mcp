@@ -194,6 +194,10 @@ export class HttpTransport implements TransportInstance {
 				"read_marketing_events", "write_marketing_events",
 				"read_gift_cards", "write_gift_cards",
 				"read_price_rules", "write_price_rules",
+				"read_themes", "write_themes",
+				"read_online_store_pages", "write_online_store_pages",
+				"read_online_store_navigation", "write_online_store_navigation",
+				"read_script_tags", "write_script_tags",
 			].join(",");
 
 			// GET /shopify/install?shop=foo.myshopify.com → redirect to Shopify authorize
