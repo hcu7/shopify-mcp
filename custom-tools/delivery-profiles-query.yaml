@@ -1,0 +1,108 @@
+name: delivery_profiles_query
+domain: settings
+description: |
+  List all delivery profiles (Versandprofile) of the shop, including their
+  location groups, zones (countries), and method definitions (rates with
+  weight conditions). Use this to inspect the current shipping configuration
+  before modifying it. Returns profile IDs needed for delivery_profile_update.
+scopes:
+  - read_shipping
+input:
+  limit:
+    type: number
+    description: Max number of profiles to return (default 25)
+    required: false
+    min: 1
+    max: 100
+    default: 25
+graphql: |
+  query DeliveryProfilesQuery($limit: Int) {
+    deliveryProfiles(first: $limit) {
+      edges {
+        node {
+          id
+          name
+          default
+          legacyMode
+          profileLocationGroups {
+            locationGroup {
+              id
+              locations(first: 50) {
+                edges {
+                  node {
+                    id
+                    name
+                  }
+                }
+              }
+            }
+            locationGroupZones(first: 50) {
+              edges {
+                node {
+                  zone {
+                    id
+                    name
+                    countries {
+                      id
+                      code {
+                        countryCode
+                        restOfWorld
+                      }
+                      name
+                      provinces {
+                        id
+                        code
+                        name
+                      }
+                    }
+                  }
+                  methodDefinitionCounts {
+                    rateDefinitionsCount
+                    participantDefinitionsCount
+                  }
+                  methodDefinitions(first: 50) {
+                    edges {
+                      node {
+                        id
+                        name
+                        active
+                        description
+                        rateProvider {
+                          __typename
+                          ... on DeliveryRateDefinition {
+                            id
+                            price {
+                              amount
+                              currencyCode
+                            }
+                          }
+                        }
+                        methodConditions {
+                          id
+                          field
+                          operator
+                          conditionCriteria {
+                            __typename
+                            ... on Weight {
+                              value
+                              unit
+                            }
+                            ... on MoneyV2 {
+                              amount
+                              currencyCode
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+response:
+  mapping: data.deliveryProfiles

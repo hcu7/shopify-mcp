@@ -1,0 +1,105 @@
+name: delivery_profile_update
+domain: settings
+description: |
+  Update a delivery profile (Versandprofil): add countries to a location group,
+  create new zones, add weight-based shipping rates, or modify existing methods.
+  Pass the profile ID and a DeliveryProfileInput object. The input shape mirrors
+  Shopify's GraphQL DeliveryProfileInput — it supports profileLocationGroupsToCreate,
+  profileLocationGroupsToUpdate (with zonesToCreate/Update/Delete + methodDefinitionsToCreate/
+  Update/Delete), name updates, etc.
+
+  Typical workflow to add a new country zone with weight tiers:
+    1. Get the profile ID + locationGroup ID via delivery_profiles_query.
+    2. Pass profile.profileLocationGroupsToUpdate=[{ id: <locationGroupId>,
+       zonesToCreate: [{ name: "Österreich", countries: [{ code: "AT", includeAllProvinces: true }],
+         methodDefinitionsToCreate: [{ name, active: true,
+           rateDefinition: { price: { amount: "6.90", currencyCode: "EUR" } },
+           weightConditionsToCreate: [{ criteria: { unit: KILOGRAMS, value: 2.0 },
+             operator: LESS_THAN_OR_EQUAL_TO }] }] }] }]
+scopes:
+  - write_shipping
+input:
+  id:
+    type: string
+    description: Delivery profile GID (e.g. gid://shopify/DeliveryProfile/12345)
+    required: true
+  profile:
+    type: object
+    description: |
+      DeliveryProfileInput object. Common fields:
+      - name (string)
+      - profileLocationGroupsToCreate / profileLocationGroupsToUpdate / profileLocationGroupsToDelete
+      - sellingPlanGroupsToAssociate / sellingPlanGroupsToDissociate
+      - variantsToAssociate / variantsToDissociate
+      - conditionsToUpdate
+
+      profileLocationGroupsToUpdate items support:
+      - id (locationGroup GID)
+      - locations (array of location IDs)
+      - zonesToCreate / zonesToUpdate / zonesToDelete
+
+      Each zone supports:
+      - name, countries (array of {code, includeAllProvinces, provinces})
+      - methodDefinitionsToCreate (array of method-definition inputs)
+      - methodDefinitionsToUpdate / methodDefinitionsToDelete
+
+      Each methodDefinition supports:
+      - name, description, active
+      - rateDefinition: { price: { amount, currencyCode } }
+      - weightConditionsToCreate: [{ criteria: { unit, value }, operator }]
+      - priceConditionsToCreate: [{ criteria: { amount, currencyCode }, operator }]
+    required: true
+graphql: |
+  mutation DeliveryProfileUpdate($id: ID!, $profile: DeliveryProfileInput!) {
+    deliveryProfileUpdate(id: $id, profile: $profile, leaveLegacyModeProfiles: false) {
+      profile {
+        id
+        name
+        profileLocationGroups {
+          locationGroup {
+            id
+          }
+          locationGroupZones(first: 50) {
+            edges {
+              node {
+                zone {
+                  id
+                  name
+                  countries {
+                    code {
+                      countryCode
+                    }
+                    name
+                  }
+                }
+                methodDefinitions(first: 50) {
+                  edges {
+                    node {
+                      id
+                      name
+                      active
+                      rateProvider {
+                        __typename
+                        ... on DeliveryRateDefinition {
+                          price {
+                            amount
+                            currencyCode
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.deliveryProfileUpdate
