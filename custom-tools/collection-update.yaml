@@ -1,0 +1,38 @@
+name: collection_update
+domain: products
+description: |
+  Update a Shopify collection's title, handle, description (HTML), SEO,
+  template suffix or sort order. Works for both manual and smart collections.
+  Pass the full GID and only the fields you want to change.
+scopes:
+  - write_products
+input:
+  input:
+    type: object
+    description: |
+      CollectionInput object. Minimal shape:
+      {
+        id: "gid://shopify/Collection/669341778299",  # required
+        title, handle, descriptionHtml,
+        seo: { title, description },
+        templateSuffix, sortOrder
+      }
+    required: true
+graphql: |
+  mutation CollectionUpdate($input: CollectionInput!) {
+    collectionUpdate(input: $input) {
+      collection {
+        id
+        title
+        handle
+        descriptionHtml
+        updatedAt
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.collectionUpdate
