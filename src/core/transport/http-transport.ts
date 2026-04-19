@@ -335,6 +335,12 @@ h1{color:#0a7c42}code{background:#f4f4f5;padding:2px 6px;border-radius:4px}</sty
 				}
 				if (req.url === "/register" && req.method === "POST") {
 					auditLog({ event: "oauth_register", ip: getClientIp(req) });
+					let redirectUris: string[] = [];
+					try {
+						const body = await readBody(req);
+						const parsed = JSON.parse(body);
+						if (Array.isArray(parsed.redirect_uris)) redirectUris = parsed.redirect_uris;
+					} catch { /* ignore parse errors */ }
 					res.writeHead(200, { "Content-Type": "application/json" });
 					res.end(JSON.stringify({
 						client_id: oauthClient,
@@ -342,6 +348,7 @@ h1{color:#0a7c42}code{background:#f4f4f5;padding:2px 6px;border-radius:4px}</sty
 						token_endpoint_auth_method: "client_secret_post",
 						grant_types: ["authorization_code"],
 						response_types: ["code"],
+						redirect_uris: redirectUris,
 					}));
 					return;
 				}
