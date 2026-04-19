@@ -1,0 +1,89 @@
+name: metafields_get
+domain: products
+description: |
+  Read all metafields for a Shopify resource (product, variant, customer, order, collection).
+  Pass the full GID of the owner resource. Returns namespace, key, value, and type for each metafield.
+  Useful for auditing or reading back values that were set via metafields_set.
+scopes:
+  - read_products
+  - read_customers
+  - read_orders
+input:
+  owner_id:
+    type: string
+    description: |
+      Full Shopify GID of the resource to read metafields from.
+      Examples:
+        "gid://shopify/Product/12345"
+        "gid://shopify/ProductVariant/67890"
+        "gid://shopify/Customer/11111"
+        "gid://shopify/Order/22222"
+    required: true
+graphql: |
+  query MetafieldsGet($owner_id: ID!) {
+    node(id: $owner_id) {
+      id
+      ... on Product {
+        title
+        metafields(first: 50) {
+          edges {
+            node {
+              id
+              namespace
+              key
+              value
+              type
+              updatedAt
+            }
+          }
+        }
+      }
+      ... on ProductVariant {
+        title
+        metafields(first: 50) {
+          edges {
+            node {
+              id
+              namespace
+              key
+              value
+              type
+              updatedAt
+            }
+          }
+        }
+      }
+      ... on Customer {
+        displayName
+        metafields(first: 50) {
+          edges {
+            node {
+              id
+              namespace
+              key
+              value
+              type
+              updatedAt
+            }
+          }
+        }
+      }
+      ... on Order {
+        name
+        metafields(first: 50) {
+          edges {
+            node {
+              id
+              namespace
+              key
+              value
+              type
+              updatedAt
+            }
+          }
+        }
+      }
+    }
+  }
+response:
+  mapping: data.node
