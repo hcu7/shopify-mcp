@@ -11,8 +11,11 @@
 # -----------------------------------------------------------------------------
 FROM node:22-alpine AS builder
 
-# pnpm is the package manager; install via corepack (ships with Node 22)
-RUN corepack enable && corepack prepare pnpm@latest --activate
+# pnpm is the package manager; install via corepack (ships with Node 22).
+# Pinned to pnpm@10 because pnpm@11 (current `latest`) introduced a stricter
+# "overrides" config check that rejects this lockfile (lockfileVersion 9.0)
+# with ERR_PNPM_LOCKFILE_CONFIG_MISMATCH on `--frozen-lockfile`.
+RUN corepack enable && corepack prepare pnpm@10 --activate
 
 WORKDIR /build
 
