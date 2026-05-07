@@ -1,0 +1,73 @@
+name: page_create
+domain: products
+description: |
+  Create a new Online-Store Page (Online Store > Pages) via the Admin GraphQL API.
+  Use this for static content pages like "About", "Shipping", "llms.txt", "agents.md", etc.
+  Mutation: pageCreate(page: PageCreateInput!) — requires Admin API 2026-01+.
+  Returns the new page id, handle, title, templateSuffix, isPublished and timestamps.
+scopes:
+  - write_content
+input:
+  title:
+    type: string
+    description: Page title (e.g. "LLMs.txt")
+    required: true
+  body_html:
+    type: string
+    description: Page body as HTML. Plain text or full HTML allowed. Empty string by default.
+    required: false
+    default: ""
+  handle:
+    type: string
+    description: |
+      URL handle (slug). Auto-generated from title if omitted.
+      Example: "llms-txt" -> /pages/llms-txt
+    required: false
+  template_suffix:
+    type: string
+    description: |
+      Theme template suffix without `page.` prefix and without `.liquid`.
+      Example: "llms-txt" loads `templates/page.llms-txt.liquid`.
+      Omit to use the default `templates/page.liquid`.
+    required: false
+  published:
+    type: boolean
+    description: Whether the page is published (visible on storefront). Default true.
+    required: false
+    default: true
+graphql: |
+  mutation PageCreate(
+    $title: String!
+    $body_html: String
+    $handle: String
+    $template_suffix: String
+    $published: Boolean
+  ) {
+    pageCreate(
+      page: {
+        title: $title
+        body: $body_html
+        handle: $handle
+        templateSuffix: $template_suffix
+        isPublished: $published
+      }
+    ) {
+      page {
+        id
+        handle
+        title
+        templateSuffix
+        isPublished
+        publishedAt
+        createdAt
+        updatedAt
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.pageCreate

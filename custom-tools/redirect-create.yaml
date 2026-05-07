@@ -1,0 +1,39 @@
+name: redirect_create
+domain: products
+description: |
+  Create a URL Redirect (Online Store > Navigation > URL Redirects).
+  Mutation: urlRedirectCreate(urlRedirect: UrlRedirectInput!).
+  Use to map a legacy / external path to a new storefront URL,
+  e.g. "/llms.txt" -> "/pages/llms-txt".
+scopes:
+  - write_online_store_pages
+input:
+  path:
+    type: string
+    description: |
+      The "from" path on your storefront (max 255 chars). Must start with `/`.
+      Example: "/llms.txt"
+    required: true
+  target:
+    type: string
+    description: |
+      The "to" target path or full URL the redirect should point to (max 255 chars).
+      Relative path (recommended) e.g. "/pages/llms-txt" — or full URL.
+    required: true
+graphql: |
+  mutation UrlRedirectCreate($path: String!, $target: String!) {
+    urlRedirectCreate(urlRedirect: { path: $path, target: $target }) {
+      urlRedirect {
+        id
+        path
+        target
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.urlRedirectCreate

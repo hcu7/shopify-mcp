@@ -1,0 +1,39 @@
+name: list_pages
+domain: products
+description: |
+  List all Online-Store Pages (Online Store > Pages) of the shop.
+  Returns id, title, handle, templateSuffix, isPublished, createdAt, updatedAt for each page.
+  Useful for finding existing page GIDs before calling page_update or building site overviews.
+scopes:
+  - read_content
+input:
+  limit:
+    type: number
+    description: Max number of pages to return (default 50, max 250)
+    required: false
+    min: 1
+    max: 250
+    default: 50
+graphql: |
+  query ListPages($limit: Int) {
+    pages(first: $limit) {
+      edges {
+        node {
+          id
+          title
+          handle
+          templateSuffix
+          isPublished
+          publishedAt
+          createdAt
+          updatedAt
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+response:
+  mapping: data.pages

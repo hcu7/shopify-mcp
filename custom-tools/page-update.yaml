@@ -1,0 +1,76 @@
+name: page_update
+domain: products
+description: |
+  Update an existing Online-Store Page (Online Store > Pages) via the Admin GraphQL API.
+  Mutation: pageUpdate(id: ID!, page: PageUpdateInput!) — requires Admin API 2026-01+.
+  Pass the page GID and only the fields you want to change.
+  Note: nullable fields are only sent to Shopify when explicitly provided
+  (the literal object always lists every key, but Shopify treats null as "no change"
+  for optional inputs in PageUpdateInput).
+scopes:
+  - write_content
+input:
+  id:
+    type: string
+    description: Page GID (e.g. gid://shopify/Page/123456789)
+    required: true
+  title:
+    type: string
+    description: New page title.
+    required: false
+  body_html:
+    type: string
+    description: New HTML body for the page.
+    required: false
+  handle:
+    type: string
+    description: New URL handle (slug).
+    required: false
+  template_suffix:
+    type: string
+    description: |
+      New theme template suffix without `page.` prefix and without `.liquid`.
+      Example: "llms-txt" loads `templates/page.llms-txt.liquid`.
+    required: false
+  published:
+    type: boolean
+    description: Whether the page should be published (visible on storefront).
+    required: false
+graphql: |
+  mutation PageUpdate(
+    $id: ID!
+    $title: String
+    $body_html: String
+    $handle: String
+    $template_suffix: String
+    $published: Boolean
+  ) {
+    pageUpdate(
+      id: $id
+      page: {
+        title: $title
+        body: $body_html
+        handle: $handle
+        templateSuffix: $template_suffix
+        isPublished: $published
+      }
+    ) {
+      page {
+        id
+        handle
+        title
+        templateSuffix
+        isPublished
+        publishedAt
+        createdAt
+        updatedAt
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.pageUpdate
