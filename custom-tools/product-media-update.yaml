@@ -1,0 +1,63 @@
+name: product_media_update
+domain: products
+description: |
+  Update existing media items on a product — primarily for setting/changing ALT-text
+  (accessibility, SEO). Targets media that is already attached to the product (use
+  product_media_create to add new media first).
+  Each media entry must include the MediaImage/Video GID and the new alt text.
+  Note: Shopify's UpdateMediaInput supports `id`, `alt`, and `previewImageSource`.
+  This tool focuses on the alt-text use-case but accepts `previewImageSource` too.
+scopes:
+  - write_products
+input:
+  product_id:
+    type: string
+    description: Product GID (e.g. gid://shopify/Product/12345)
+    required: true
+  media:
+    type: object
+    description: |
+      Array of media update entries. Each: {
+        id: "gid://shopify/MediaImage/123",  # required, existing media GID
+        alt: "Alt text for accessibility",   # required for the alt-tag use-case
+        previewImageSource: "https://..."    # optional, replaces the preview image URL
+      }
+    required: true
+graphql: |
+  mutation ProductUpdateMedia($product_id: ID!, $media: [UpdateMediaInput!]!) {
+    productUpdateMedia(productId: $product_id, media: $media) {
+      media {
+        ... on MediaImage {
+          id
+          alt
+          status
+          image { url width height }
+        }
+        ... on Video {
+          id
+          alt
+          status
+          sources { url mimeType format height width }
+        }
+        ... on ExternalVideo {
+          id
+          alt
+          embedUrl
+        }
+        ... on Model3d {
+          id
+          alt
+          sources { url mimeType format }
+        }
+        mediaContentType
+        mediaErrors { code details message }
+      }
+      mediaUserErrors { code field message }
+      product {
+        id
+        title
+      }
+    }
+  }
+response:
+  mapping: data.productUpdateMedia
