@@ -1,0 +1,81 @@
+name: create_draft_order_with_discount
+domain: orders
+description: |
+  Create a draft order with full DraftOrderInput — supports appliedDiscount
+  (PERCENTAGE or FIXED_AMOUNT) and tags in addition to the standard
+  customer/line-items/shipping fields. Wraps Shopify's draftOrderCreate.
+
+  Use case: marketing sample-orders (100% discount + tag sample-mkt in ONE
+  transaction). Built-in create_draft_order doesn't expose appliedDiscount
+  or tags fields.
+
+  ADR-PA-14 compliant: creates a Draft (reversible, no money charged until
+  complete_draft_order is called).
+
+  Example input.input:
+    {
+      "lineItems": [
+        {"variantId": "gid://shopify/ProductVariant/55542774563195", "quantity": 1}
+      ],
+      "customerId": "gid://shopify/Customer/24745556181371",
+      "appliedDiscount": {
+        "valueType": "PERCENTAGE",
+        "value": 100,
+        "title": "Sample (Marketing)",
+        "description": "100% sample-mkt"
+      },
+      "tags": ["sample-mkt"],
+      "shippingAddress": {
+        "firstName": "Marc",
+        "lastName": "Schürmann",
+        "address1": "Leydelstraße 89",
+        "city": "Krefeld",
+        "zip": "47802",
+        "country": "DE"
+      },
+      "note": "Sample-Order Marketing"
+    }
+scopes:
+  - write_draft_orders
+  - write_customers
+input:
+  input:
+    type: object
+    description: |
+      DraftOrderInput object — full Shopify shape. Required field: lineItems
+      (array of {variantId, quantity}). Optional: customerId, appliedDiscount
+      ({valueType: "PERCENTAGE"|"FIXED_AMOUNT", value: number, title?, description?}),
+      tags (array of strings), shippingAddress (MailingAddressInput with firstName,
+      lastName, address1, address2, city, province, zip, country), note (string).
+      All field names camelCase per Shopify GraphQL.
+    required: true
+graphql: |
+  mutation CreateDraftWithDiscount($input: DraftOrderInput!) {
+    draftOrderCreate(input: $input) {
+      draftOrder {
+        id
+        name
+        status
+        invoiceUrl
+        tags
+        totalPriceSet { shopMoney { amount currencyCode } }
+        subtotalPriceSet { shopMoney { amount currencyCode } }
+        appliedDiscount { value valueType title description }
+        customer { id displayName email }
+        lineItems(first: 50) {
+          edges {
+            node {
+              title
+              quantity
+              originalUnitPriceSet { shopMoney { amount currencyCode } }
+              discountedUnitPriceSet { shopMoney { amount currencyCode } }
+            }
+          }
+        }
+        shippingAddress { address1 city zip country firstName lastName }
+      }
+      userErrors { field message }
+    }
+  }
+response:
+  mapping: data.draftOrderCreate
