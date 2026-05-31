@@ -1,0 +1,35 @@
+name: get_customer_store_credit
+domain: customers
+description: >
+  Get a customer's store credit account balance(s). Returns each store credit
+  account (one per currency) with its current balance. Use to verify whether a
+  customer has store credit and how much — e.g. as a cross-check before booking
+  a "Kundenguthaben" voucher in accounting. Balance only; transaction history
+  requires the read_store_credit_account_transactions scope and is intentionally
+  not requested here so the query stays within read_customers.
+scopes:
+  - read_customers
+input:
+  customer_id:
+    type: string
+    description: Customer GID (e.g. gid://shopify/Customer/24669732307323)
+    required: true
+graphql: |
+  query GetCustomerStoreCredit($customer_id: ID!) {
+    customer(id: $customer_id) {
+      id
+      displayName
+      email
+      storeCreditAccounts(first: 10) {
+        nodes {
+          id
+          balance {
+            amount
+            currencyCode
+          }
+        }
+      }
+    }
+  }
+response:
+  mapping: data.customer
