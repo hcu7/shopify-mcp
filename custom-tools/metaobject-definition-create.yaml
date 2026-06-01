@@ -1,0 +1,81 @@
+name: metaobject_definition_create
+domain: products
+description: |
+  Create a metaobject definition — a reusable custom content type (e.g. "athlete").
+  Field definitions use the same type system as metafields (single_line_text_field,
+  multi_line_text_field, rich_text_field, number_integer, boolean, url, date,
+  file_reference, list.file_reference, product_reference, list.product_reference,
+  collection_reference, metaobject_reference, …).
+
+  Enable `access.storefront: PUBLIC_READ` so entries are readable in Liquid via
+  `shop.metaobjects.<type>.values`. Enable the `onlineStore` capability with a
+  `data.urlHandle` so each entry gets its own theme-rendered URL
+  (e.g. /<urlHandle>/<entry-handle>, served by templates/metaobject.<type>.json).
+  Enable the `publishable` capability to control ACTIVE/DRAFT per entry.
+scopes:
+  - write_metaobjects
+input:
+  definition:
+    type: object
+    description: |
+      MetaobjectDefinitionCreateInput. Typical shape for an "athlete" type:
+      {
+        type: "athlete",
+        name: "Athlete",
+        displayNameKey: "name",
+        access: { storefront: "PUBLIC_READ" },
+        capabilities: {
+          publishable: { enabled: true },
+          onlineStore: { enabled: true, data: { urlHandle: "athletes", createRedirects: true } },
+          renderable:  { enabled: true, data: { metaTitleKey: "name", metaDescriptionKey: "tagline" } }
+        },
+        fieldDefinitions: [
+          { key: "name",            name: "Name",            type: "single_line_text_field", required: true },
+          { key: "tagline",         name: "Tagline",         type: "single_line_text_field" },
+          { key: "card_image",      name: "Card image",      type: "file_reference", validations: [{ name: "file_type_options", value: "[\"Image\"]" }] },
+          { key: "portrait",        name: "Portrait",        type: "file_reference", validations: [{ name: "file_type_options", value: "[\"Image\"]" }] },
+          { key: "action_photos",   name: "Action photos",   type: "list.file_reference" },
+          { key: "birthyear",       name: "Birth year",      type: "number_integer" },
+          { key: "atp_rank",        name: "ATP rank",        type: "number_integer" },
+          { key: "career_high",     name: "Career high",     type: "number_integer" },
+          { key: "hometown",        name: "Hometown",        type: "single_line_text_field" },
+          { key: "base",            name: "Base",            type: "single_line_text_field" },
+          { key: "clubs_leagues",   name: "Clubs & leagues", type: "multi_line_text_field" },
+          { key: "season_goal",     name: "Season goal",     type: "multi_line_text_field" },
+          { key: "approach",        name: "Approach",        type: "multi_line_text_field" },
+          { key: "story_teaser",    name: "Story teaser",    type: "multi_line_text_field" },
+          { key: "instagram_handle",name: "Instagram handle",type: "single_line_text_field" },
+          { key: "ig_followers",    name: "IG followers",    type: "number_integer" },
+          { key: "look_products",   name: "Shop the look",   type: "list.product_reference" },
+          { key: "look_collection", name: "Look collection", type: "collection_reference" },
+          { key: "ig_reels",        name: "IG reels",        type: "list.url" },
+          { key: "featured",        name: "Featured",        type: "boolean" },
+          { key: "sort",            name: "Sort order",      type: "number_integer" }
+        ]
+      }
+    required: true
+graphql: |
+  mutation MetaobjectDefinitionCreate($definition: MetaobjectDefinitionCreateInput!) {
+    metaobjectDefinitionCreate(definition: $definition) {
+      metaobjectDefinition {
+        id
+        type
+        name
+        fieldDefinitions {
+          key
+          name
+          type {
+            name
+          }
+          required
+        }
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.metaobjectDefinitionCreate
