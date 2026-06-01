@@ -41,9 +41,9 @@ graphql: |
   mutation ArticleUpdate(
     $id: ID!
     $title: String
-    $body_html: String
+    $body_html: HTML
     $handle: String
-    $summary_html: String
+    $summary_html: HTML
     $is_published: Boolean
     $tags: [String!]
   ) {
