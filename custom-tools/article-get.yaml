@@ -1,0 +1,40 @@
+name: article_get
+domain: products
+description: |
+  Get a Blog Article by its GID — returns the full HTML body, title, handle, summary,
+  publish status, tags, image and the parent blog. Use this to read an article's
+  current body_html before/after updating it, or to find its blog GID.
+scopes:
+  - read_content
+input:
+  id:
+    type: string
+    description: Article GID (e.g. gid://shopify/Article/1002651124091)
+    required: true
+graphql: |
+  query GetArticle($id: ID!) {
+    article(id: $id) {
+      id
+      title
+      handle
+      body
+      summary
+      isPublished
+      publishedAt
+      updatedAt
+      tags
+      image {
+        url
+        altText
+        width
+        height
+      }
+      blog {
+        id
+        title
+        handle
+      }
+    }
+  }
+response:
+  mapping: data.article

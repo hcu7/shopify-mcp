@@ -1,0 +1,47 @@
+name: files_get
+domain: products
+description: |
+  List Files (Content > Files) with their public CDN url and processing status.
+  Use to fetch the public cdn.shopify.com url of an image created via file_create,
+  once its fileStatus is READY. Optional `query` filters by filename or other fields
+  (Shopify file search syntax, e.g. "filename:1_hero.jpg" or "media_type:IMAGE").
+scopes:
+  - read_files
+input:
+  query:
+    type: string
+    description: Optional Shopify file search query (e.g. "filename:1_hero.jpg").
+    required: false
+  limit:
+    type: number
+    description: Max files to return.
+    required: false
+    default: 10
+    min: 1
+    max: 50
+graphql: |
+  query GetFiles($query: String, $limit: Int!) {
+    files(first: $limit, query: $query, sortKey: CREATED_AT, reverse: true) {
+      edges {
+        node {
+          id
+          fileStatus
+          alt
+          createdAt
+          ... on MediaImage {
+            image {
+              url
+              width
+              height
+            }
+          }
+          ... on GenericFile {
+            url
+            mimeType
+          }
+        }
+      }
+    }
+  }
+response:
+  mapping: data.files

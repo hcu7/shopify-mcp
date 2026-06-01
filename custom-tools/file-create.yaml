@@ -1,0 +1,47 @@
+name: file_create
+domain: products
+description: |
+  Create generic Files (Content > Files) from a public URL or a staged-upload resourceUrl.
+  Mutation: fileCreate(files: [FileCreateInput!]!). For local files, call
+  staged_uploads_create first (resource: "IMAGE"), POST the bytes to the signed URL,
+  then pass the returned resourceUrl here as originalSource.
+  Returns file id + fileStatus. The CDN url (image.url) may be null until processing
+  finishes — poll files_get by filename until fileStatus is READY to get the url.
+scopes:
+  - write_files
+input:
+  files:
+    type: object
+    description: |
+      Array of files. Each: {
+        originalSource: "https://... or staged resourceUrl",  # required
+        contentType: "IMAGE",                                  # IMAGE | FILE | VIDEO
+        alt: "Alt text for accessibility",                     # optional
+        filename: "1_hero.jpg"                                 # optional
+      }
+    required: true
+graphql: |
+  mutation FileCreate($files: [FileCreateInput!]!) {
+    fileCreate(files: $files) {
+      files {
+        id
+        fileStatus
+        alt
+        createdAt
+        ... on MediaImage {
+          image {
+            url
+            width
+            height
+          }
+        }
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.fileCreate

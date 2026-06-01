@@ -1,0 +1,78 @@
+name: article_update
+domain: products
+description: |
+  Update an existing Blog Article (Online Store > Blog posts) via the Admin GraphQL API.
+  Mutation: articleUpdate(id: ID!, article: ArticleUpdateInput!) — requires Admin API 2024-07+.
+  Pass the Article GID and only the fields you want to change. `body_html` is the
+  full HTML body of the article (maps to ArticleUpdateInput.body).
+  Use this to set rich editorial HTML (headings, blockquotes, figures/images, callouts).
+scopes:
+  - write_content
+input:
+  id:
+    type: string
+    description: Article GID (e.g. gid://shopify/Article/1002651124091)
+    required: true
+  title:
+    type: string
+    description: New article title.
+    required: false
+  body_html:
+    type: string
+    description: New full HTML body for the article (maps to ArticleUpdateInput.body).
+    required: false
+  handle:
+    type: string
+    description: New URL handle (slug).
+    required: false
+  summary_html:
+    type: string
+    description: Excerpt / summary HTML (maps to ArticleUpdateInput.summary).
+    required: false
+  is_published:
+    type: boolean
+    description: Whether the article is published (visible on storefront).
+    required: false
+  tags:
+    type: object
+    description: Array of tag strings, e.g. ["Season Stories", "Tennis"].
+    required: false
+graphql: |
+  mutation ArticleUpdate(
+    $id: ID!
+    $title: String
+    $body_html: String
+    $handle: String
+    $summary_html: String
+    $is_published: Boolean
+    $tags: [String!]
+  ) {
+    articleUpdate(
+      id: $id
+      article: {
+        title: $title
+        body: $body_html
+        handle: $handle
+        summary: $summary_html
+        isPublished: $is_published
+        tags: $tags
+      }
+    ) {
+      article {
+        id
+        title
+        handle
+        isPublished
+        publishedAt
+        updatedAt
+        tags
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.articleUpdate
