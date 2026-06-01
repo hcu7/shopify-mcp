@@ -1,0 +1,56 @@
+name: metaobject_upsert
+domain: products
+description: |
+  Create or update a metaobject entry by handle (idempotent — same {type, handle}
+  updates in place). Field values are stringified: plain text as-is, numbers as
+  strings, references as a GID string, list/reference fields as a JSON-array string
+  of GIDs (e.g. "[\"gid://shopify/Product/1\",\"gid://shopify/Product/2\"]").
+  file_reference values take a MediaImage/GenericFile GID.
+
+  For definitions with the `publishable` capability you MUST set
+  capabilities.publishable.status to "ACTIVE" or "DRAFT" (DRAFT = not yet visible
+  on the storefront / no Online Store URL).
+scopes:
+  - write_metaobjects
+input:
+  handle:
+    type: object
+    description: 'MetaobjectHandleInput — { type: "athlete", handle: "stefan-seifert" }'
+    required: true
+  metaobject:
+    type: object
+    description: |
+      MetaobjectUpsertInput. Shape:
+      {
+        fields: [
+          { key: "name",          value: "Stefan Seifert" },
+          { key: "atp_rank",      value: "1109" },
+          { key: "portrait",      value: "gid://shopify/MediaImage/123" },
+          { key: "look_products", value: "[\"gid://shopify/Product/123\"]" },
+          { key: "ig_reels",      value: "[\"https://www.instagram.com/reel/XXXX/\"]" }
+        ],
+        capabilities: { publishable: { status: "ACTIVE" } }
+      }
+    required: true
+graphql: |
+  mutation MetaobjectUpsert($handle: MetaobjectHandleInput!, $metaobject: MetaobjectUpsertInput!) {
+    metaobjectUpsert(handle: $handle, metaobject: $metaobject) {
+      metaobject {
+        id
+        handle
+        type
+        displayName
+        fields {
+          key
+          value
+        }
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.metaobjectUpsert

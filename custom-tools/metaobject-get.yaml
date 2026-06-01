@@ -1,0 +1,27 @@
+name: metaobject_get
+domain: products
+description: |
+  Get a single metaobject entry by handle ({type, handle}). Returns id, handle,
+  displayName and all field key/value pairs.
+scopes:
+  - read_metaobjects
+input:
+  handle:
+    type: object
+    description: 'MetaobjectHandleInput — { type: "athlete", handle: "stefan-seifert" }'
+    required: true
+graphql: |
+  query MetaobjectByHandle($handle: MetaobjectHandleInput!) {
+    metaobjectByHandle(handle: $handle) {
+      id
+      handle
+      type
+      displayName
+      fields {
+        key
+        value
+      }
+    }
+  }
+response:
+  mapping: data.metaobjectByHandle

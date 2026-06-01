@@ -1,0 +1,43 @@
+name: metaobjects_list
+domain: products
+description: |
+  List metaobject entries of a given type (e.g. "athlete"). Returns id, handle,
+  displayName and all field key/value pairs per entry. Use to verify or read back
+  entries created via metaobject_upsert.
+scopes:
+  - read_metaobjects
+input:
+  type:
+    type: string
+    description: Metaobject definition type, e.g. "athlete"
+    required: true
+  first:
+    type: number
+    description: Max entries to return (default 50, max 250)
+    required: false
+    min: 1
+    max: 250
+    default: 50
+graphql: |
+  query MetaobjectsList($type: String!, $first: Int) {
+    metaobjects(type: $type, first: $first) {
+      edges {
+        node {
+          id
+          handle
+          type
+          displayName
+          fields {
+            key
+            value
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+response:
+  mapping: data.metaobjects
