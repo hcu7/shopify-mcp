@@ -1,0 +1,84 @@
+name: article_create
+domain: products
+description: |
+  Create a new Blog Article (Online Store > Blog posts) via the Admin GraphQL API.
+  Mutation: articleCreate(article: ArticleCreateInput!) — requires Admin API 2024-07+.
+  Requires blog_id (the parent Blog GID) and title. `body_html` is the full HTML body
+  (maps to ArticleCreateInput.body). Pass author_name (e.g. "COURT7") to set the byline.
+  Leave is_published false to create a Draft. Use this to publish rich editorial HTML
+  (headings, blockquotes, figures/images, callouts).
+scopes:
+  - write_content
+input:
+  blog_id:
+    type: string
+    description: Parent Blog GID (e.g. gid://shopify/Blog/116751860091)
+    required: true
+  title:
+    type: string
+    description: Article title.
+    required: true
+  body_html:
+    type: string
+    description: Full HTML body for the article (maps to ArticleCreateInput.body).
+    required: false
+  handle:
+    type: string
+    description: URL handle (slug). If omitted, Shopify derives one from the title.
+    required: false
+  summary_html:
+    type: string
+    description: Excerpt / summary HTML (maps to ArticleCreateInput.summary).
+    required: false
+  is_published:
+    type: boolean
+    description: Whether the article is published (visible on storefront). Default false = Draft.
+    required: false
+  author_name:
+    type: string
+    description: Author display name (maps to ArticleCreateInput.author.name). Recommended.
+    required: false
+  tags:
+    type: object
+    description: Array of tag strings, e.g. ["Season Stories", "Tennis"].
+    required: false
+graphql: |
+  mutation ArticleCreate(
+    $blog_id: ID!
+    $title: String!
+    $body_html: HTML
+    $handle: String
+    $summary_html: HTML
+    $is_published: Boolean
+    $author_name: String
+    $tags: [String!]
+  ) {
+    articleCreate(
+      article: {
+        blogId: $blog_id
+        title: $title
+        body: $body_html
+        handle: $handle
+        summary: $summary_html
+        isPublished: $is_published
+        author: { name: $author_name }
+        tags: $tags
+      }
+    ) {
+      article {
+        id
+        title
+        handle
+        isPublished
+        publishedAt
+        createdAt
+      }
+      userErrors {
+        field
+        message
+        code
+      }
+    }
+  }
+response:
+  mapping: data.articleCreate
