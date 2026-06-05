@@ -24,6 +24,7 @@
 	"remove_customer_tag": "remove-tag",
 	"search_customers": "search",
 	"update_customer": "update",
+	"create_discount_code": "create-code",
 	"adjust_inventory": "adjust",
 	"get_inventory_by_sku": "get-by-sku",
 	"get_inventory_item": "get-item",
