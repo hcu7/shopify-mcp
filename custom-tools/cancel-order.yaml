@@ -23,6 +23,10 @@ input:
     type: boolean
     description: Return inventory to stock
     required: true
+  refund:
+    type: boolean
+    description: Refund the paid amount to the original payment method (default false)
+    required: false
   notify_customer:
     type: boolean
     description: Send cancellation email to customer
@@ -32,11 +36,12 @@ input:
     description: Internal note (max 255 chars)
     required: false
 graphql: |
-  mutation CancelOrder($order_id: ID!, $reason: OrderCancelReason!, $restock: Boolean!, $notify_customer: Boolean, $staff_note: String) {
+  mutation CancelOrder($order_id: ID!, $reason: OrderCancelReason!, $restock: Boolean!, $refund: Boolean = false, $notify_customer: Boolean, $staff_note: String) {
     orderCancel(
       orderId: $order_id
       reason: $reason
       restock: $restock
+      refund: $refund
       notifyCustomer: $notify_customer
       staffNote: $staff_note
     ) {
