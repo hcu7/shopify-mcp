@@ -1,0 +1,34 @@
+name: return_reverse_fulfillment_orders
+domain: orders
+description: |
+  List the reverseFulfillmentOrder id(s) of a Return — needed for reverse_delivery_create
+  (which registers a self-purchased GLS/DHL label + tracking on the return).
+  Call with the Return GID returned by return_create.
+scopes:
+  - write_returns
+input:
+  return_id:
+    type: string
+    description: gid://shopify/Return/... (from return_create)
+    required: true
+graphql: |
+  query ReturnRFOs($return_id: ID!) {
+    return(id: $return_id) {
+      id
+      name
+      status
+      reverseFulfillmentOrders(first: 10) {
+        edges {
+          node {
+            id
+            status
+            lineItems(first: 50) {
+              edges { node { id totalQuantity fulfillmentLineItem { id } } }
+            }
+          }
+        }
+      }
+    }
+  }
+response:
+  mapping: data.return

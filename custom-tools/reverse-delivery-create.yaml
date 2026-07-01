@@ -1,0 +1,50 @@
+name: reverse_delivery_create
+domain: orders
+description: |
+  Register a SELF-PURCHASED return shipping label + tracking on a Shopify Return
+  (reverseDeliveryCreateWithShipping). Call AFTER return_create.
+
+  Flow: return_create → return_reverse_fulfillment_orders (get reverseFulfillmentOrderId)
+  → reverse_delivery_create (this tool).
+
+  - reverseDeliveryLineItems is hardcoded `[]` → Shopify auto-fills ALL line items of the
+    reverse fulfillment order at full quantity (covers both full and partial returns, since
+    the Return itself already contains only the withdrawn items).
+  - notifyCustomer is hardcoded `false` → Shopify does NOT email the customer. We bundle the
+    label into our own Mail A (Anne/service@).
+  - trackingInput = {number, url} of the externally-purchased GLS/DHL return label. labelInput
+    is intentionally omitted (GLS gives only a base64 PDF, no hosted URL) — tracking-only is a
+    valid variant; the PDF is attached to Mail A instead.
+scopes:
+  - write_returns
+input:
+  reverseFulfillmentOrderId:
+    type: string
+    description: gid://shopify/ReverseFulfillmentOrder/... (from return_reverse_fulfillment_orders)
+    required: true
+  trackingInput:
+    type: object
+    description: '{ "number": "<tracking-number>", "url": "<carrier tracking url>" }'
+    required: false
+graphql: |
+  mutation ReverseDeliveryCreateCS($reverseFulfillmentOrderId: ID!, $trackingInput: ReverseDeliveryTrackingInput) {
+    reverseDeliveryCreateWithShipping(
+      reverseFulfillmentOrderId: $reverseFulfillmentOrderId
+      reverseDeliveryLineItems: []
+      trackingInput: $trackingInput
+      notifyCustomer: false
+    ) {
+      reverseDelivery {
+        id
+        deliverable {
+          __typename
+          ... on ReverseDeliveryShippingDeliverable {
+            tracking { number carrierName url }
+          }
+        }
+      }
+      userErrors { field message }
+    }
+  }
+response:
+  mapping: data.reverseDeliveryCreateWithShipping
