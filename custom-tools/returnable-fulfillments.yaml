@@ -3,6 +3,7 @@ domain: orders
 description: |
   List the returnable fulfillment line items of an order (their fulfillmentLineItem id +
   max returnable quantity). Needed to build the returnLineItems for return_create.
+  NOTE: returnableFulfillments is a TOP-LEVEL query (arg orderId: ID!), NOT a field on Order.
 scopes:
   - read_orders
 input:
@@ -12,21 +13,18 @@ input:
     required: true
 graphql: |
   query ReturnableFulfillments($order_id: ID!) {
-    order(id: $order_id) {
-      id
-      name
-      returnableFulfillments(first: 20) {
-        edges {
-          node {
-            id
-            returnableFulfillmentLineItems(first: 50) {
-              edges {
-                node {
-                  quantity
-                  fulfillmentLineItem {
-                    id
-                    lineItem { id title sku quantity variantTitle }
-                  }
+    returnableFulfillments(orderId: $order_id, first: 20) {
+      edges {
+        node {
+          id
+          fulfillment { id }
+          returnableFulfillmentLineItems(first: 50) {
+            edges {
+              node {
+                quantity
+                fulfillmentLineItem {
+                  id
+                  lineItem { id title sku quantity variantTitle }
                 }
               }
             }
@@ -36,4 +34,4 @@ graphql: |
     }
   }
 response:
-  mapping: data.order
+  mapping: data
