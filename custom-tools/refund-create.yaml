@@ -1,0 +1,41 @@
+name: refund_create
+domain: orders
+description: |
+  Create a refund for an order (refundCreate). Für die Widerruf-Erstattung nach Wareneingang.
+
+  input.input = RefundInput (camelCase Shopify shape):
+    {
+      "orderId": "gid://shopify/Order/123",
+      "note": "Widerruf §357 BGB",
+      "notify": false,
+      "refundLineItems": [
+        {"lineItemId": "gid://shopify/LineItem/456", "quantity": 1, "restockType": "RETURN"}
+      ],
+      "shipping": {"fullRefund": true},
+      "transactions": [
+        {"orderId": "gid://shopify/Order/123", "gateway": "manual",
+         "kind": "REFUND", "amount": "36.00", "parentId": "gid://shopify/OrderTransaction/789"}
+      ]
+    }
+  WICHTIG: Ohne `transactions` wird KEIN Geld bewegt (nur ein Refund-Record). parentId = die
+  ursprüngliche SALE-/CAPTURE-Transaction (via order.transactions ableiten).
+scopes:
+  - write_orders
+input:
+  input:
+    type: object
+    description: RefundInput object (Shopify shape). orderId required; transactions für echte Rückzahlung.
+    required: true
+graphql: |
+  mutation RefundCreateCS($input: RefundInput!) {
+    refundCreate(input: $input) {
+      refund {
+        id
+        note
+        totalRefundedSet { presentmentMoney { amount currencyCode } }
+      }
+      userErrors { field message }
+    }
+  }
+response:
+  mapping: data.refundCreate

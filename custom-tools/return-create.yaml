@@ -1,0 +1,43 @@
+name: return_create
+domain: orders
+description: |
+  Create a Return for a fulfilled order (returnCreate). Customer notification is controlled
+  via input.notifyCustomer (set false — Anne/service@ handles comms).
+
+  input.input = ReturnInput (camelCase Shopify shape):
+    {
+      "orderId": "gid://shopify/Order/123",
+      "returnLineItems": [
+        {"fulfillmentLineItemId": "gid://shopify/FulfillmentLineItem/456",
+         "quantity": 1,
+         "returnReason": "SIZE_TOO_SMALL",
+         "returnReasonNote": "Widerruf §356a"}
+      ],
+      "notifyCustomer": false
+    }
+  returnReason enum: SIZE_TOO_SMALL, SIZE_TOO_LARGE, UNWANTED, NOT_AS_DESCRIBED,
+  WRONG_ITEM, DEFECTIVE, STYLE, COLOR, OTHER, UNKNOWN.
+  fulfillmentLineItemId stammt aus returnable_fulfillments.
+scopes:
+  - write_returns
+  - write_orders
+input:
+  input:
+    type: object
+    description: ReturnInput object (Shopify shape). orderId + returnLineItems required.
+    required: true
+graphql: |
+  mutation ReturnCreateCS($input: ReturnInput!) {
+    returnCreate(returnInput: $input) {
+      return {
+        id
+        name
+        status
+        totalQuantity
+        order { id name }
+      }
+      userErrors { field message code }
+    }
+  }
+response:
+  mapping: data.returnCreate

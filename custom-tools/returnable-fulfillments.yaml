@@ -1,0 +1,39 @@
+name: returnable_fulfillments
+domain: orders
+description: |
+  List the returnable fulfillment line items of an order (their fulfillmentLineItem id +
+  max returnable quantity). Needed to build the returnLineItems for return_create.
+scopes:
+  - read_orders
+input:
+  order_id:
+    type: string
+    description: Order GID (e.g. gid://shopify/Order/123)
+    required: true
+graphql: |
+  query ReturnableFulfillments($order_id: ID!) {
+    order(id: $order_id) {
+      id
+      name
+      returnableFulfillments(first: 20) {
+        edges {
+          node {
+            id
+            returnableFulfillmentLineItems(first: 50) {
+              edges {
+                node {
+                  quantity
+                  fulfillmentLineItem {
+                    id
+                    lineItem { id title sku quantity variantTitle }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+response:
+  mapping: data.order
