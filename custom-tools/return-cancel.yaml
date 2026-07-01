@@ -1,0 +1,22 @@
+name: return_cancel
+domain: orders
+description: |
+  Cancel an existing Return (returnCancel) — reverts it and makes the fulfilled items
+  returnable again. Use to reset a test order for re-testing, or to clean up test returns.
+  Does NOT refund; a separate refund (if any) must be reversed manually.
+scopes:
+  - write_returns
+input:
+  return_id:
+    type: string
+    description: gid://shopify/Return/... (from return_create / list)
+    required: true
+graphql: |
+  mutation ReturnCancelCS($return_id: ID!) {
+    returnCancel(id: $return_id) {
+      return { id name status }
+      userErrors { field message }
+    }
+  }
+response:
+  mapping: data.returnCancel
