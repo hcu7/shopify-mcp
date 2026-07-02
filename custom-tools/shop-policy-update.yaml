@@ -6,17 +6,17 @@ description: |
 scopes:
   - write_content
 input:
-  policy_id:
+  policy_type:
     type: string
-    description: gid://shopify/ShopPolicy/... (from shop_policies)
+    description: ShopPolicyType enum — REFUND_POLICY, PRIVACY_POLICY, TERMS_OF_SERVICE, SHIPPING_POLICY, LEGAL_NOTICE, CONTACT_INFORMATION, SUBSCRIPTION_POLICY, TERMS_OF_SALE (from shop_policies)
     required: true
   body:
     type: string
     description: New policy body as HTML
     required: true
 graphql: |
-  mutation ShopPolicyUpdateCS($policy_id: ID!, $body: String!) {
-    shopPolicyUpdate(shopPolicy: {id: $policy_id, body: $body}) {
+  mutation ShopPolicyUpdateCS($policy_type: ShopPolicyType!, $body: String!) {
+    shopPolicyUpdate(shopPolicy: {type: $policy_type, body: $body}) {
       shopPolicy {
         id
         type
