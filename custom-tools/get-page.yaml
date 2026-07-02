@@ -1,0 +1,26 @@
+name: get_page
+domain: online_store
+description: |
+  Get a single Online-Store Page incl. its raw body HTML (for safe edit → page_update round-trips).
+  Pass the Page GID (gid://shopify/Page/123). Returns id, title, handle, body (raw HTML),
+  templateSuffix, isPublished.
+scopes:
+  - read_content
+input:
+  id:
+    type: string
+    description: gid://shopify/Page/123
+    required: true
+graphql: |
+  query GetPageById($id: ID!) {
+    page(id: $id) {
+      id
+      title
+      handle
+      body
+      templateSuffix
+      isPublished
+    }
+  }
+response:
+  mapping: data.page
