@@ -1,0 +1,24 @@
+name: order_returns
+domain: orders
+description: |
+  List all returns of an order (id, name, status) — needed to cancel/close open returns,
+  e.g. before cancelling an order (Shopify blocks orderCancel while returns are open) or for cleanup.
+scopes:
+  - write_returns
+input:
+  order_id:
+    type: string
+    description: gid://shopify/Order/123
+    required: true
+graphql: |
+  query OrderReturns($order_id: ID!) {
+    order(id: $order_id) {
+      id
+      name
+      returns(first: 50) {
+        nodes { id name status }
+      }
+    }
+  }
+response:
+  mapping: data.order
