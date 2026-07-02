@@ -1,0 +1,21 @@
+name: order_close
+domain: orders
+description: |
+  Archive/close an order (orderClose) — removes it from the open-orders view. Reversible
+  (orderOpen re-opens). Use for cleanup when orderCancel is blocked (e.g. order has returns).
+scopes:
+  - write_orders
+input:
+  order_id:
+    type: string
+    description: gid://shopify/Order/123
+    required: true
+graphql: |
+  mutation OrderCloseCS($order_id: ID!) {
+    orderClose(input: {id: $order_id}) {
+      order { id name closed closedAt }
+      userErrors { field message }
+    }
+  }
+response:
+  mapping: data.orderClose
