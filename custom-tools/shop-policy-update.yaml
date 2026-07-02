@@ -1,0 +1,33 @@
+name: shop_policy_update
+domain: online_store
+description: |
+  Update a shop legal policy body (shopPolicyUpdate). Pass the ShopPolicy GID + the new HTML body.
+  MODIFIES PUBLIC LEGAL CONTENT — read first via shop_policies and edit the raw body deliberately.
+scopes:
+  - write_content
+input:
+  policy_id:
+    type: string
+    description: gid://shopify/ShopPolicy/... (from shop_policies)
+    required: true
+  body:
+    type: string
+    description: New policy body as HTML
+    required: true
+graphql: |
+  mutation ShopPolicyUpdateCS($policy_id: ID!, $body: String!) {
+    shopPolicyUpdate(shopPolicy: {id: $policy_id, body: $body}) {
+      shopPolicy {
+        id
+        type
+        title
+        url
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.shopPolicyUpdate

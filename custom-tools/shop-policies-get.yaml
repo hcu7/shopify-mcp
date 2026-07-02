@@ -1,0 +1,24 @@
+name: shop_policies
+domain: online_store
+description: |
+  List the shop's legal policies (refund/return, privacy, TOS, shipping, subscription, ...)
+  with their raw HTML body — id, type, title, body (raw HTML), url. Use to read a policy
+  before shop_policy_update (safe round-trip edit). /policies/* are native Shopify policies,
+  NOT Online-Store Pages, so list_pages / get_page do not return them.
+scopes:
+  - read_content
+input: {}
+graphql: |
+  query ShopPoliciesCS {
+    shop {
+      shopPolicies {
+        id
+        type
+        title
+        body
+        url
+      }
+    }
+  }
+response:
+  mapping: data.shop.shopPolicies
