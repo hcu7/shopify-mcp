@@ -1,0 +1,33 @@
+name: return_approve_request
+domain: orders
+description: |
+  Approve a customer-initiated return request (returnApproveRequest): REQUESTED → OPEN.
+  Use for account-initiated returns the customer created themselves in their Shopify account.
+  notify_customer defaults false → NO Shopify email (we notify the customer via Gmail ourselves).
+scopes:
+  - write_returns
+input:
+  return_id:
+    type: string
+    description: gid://shopify/Return/123
+    required: true
+  notify_customer:
+    type: boolean
+    description: Send Shopify's "return approved" email (default false — we email ourselves)
+    required: false
+graphql: |
+  mutation ReturnApproveRequestCS($return_id: ID!, $notify_customer: Boolean) {
+    returnApproveRequest(input: {id: $return_id, notifyCustomer: $notify_customer}) {
+      return {
+        id
+        name
+        status
+      }
+      userErrors {
+        field
+        message
+      }
+    }
+  }
+response:
+  mapping: data.returnApproveRequest
