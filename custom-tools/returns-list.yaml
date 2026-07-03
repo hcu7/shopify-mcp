@@ -1,0 +1,34 @@
+name: returns_list
+domain: orders
+description: |
+  List returns filtered by a Shopify search query — e.g. "status:requested" for customer-initiated
+  return requests (account-created), "status:open" for approved-not-closed. Returns id, name, status,
+  order {id, name} + customer email. Used by the account-return poller to find new REQUESTED returns.
+scopes:
+  - read_returns
+input:
+  query:
+    type: string
+    description: Shopify returns search query, e.g. "status:requested"
+    required: false
+  first:
+    type: number
+    description: max results (default 50)
+    required: false
+graphql: |
+  query ReturnsListCS($query: String, $first: Int = 50) {
+    returns(first: $first, query: $query) {
+      nodes {
+        id
+        name
+        status
+        order {
+          id
+          name
+          customer { defaultEmailAddress { emailAddress } }
+        }
+      }
+    }
+  }
+response:
+  mapping: data.returns
