@@ -1,0 +1,39 @@
+name: return_get
+domain: orders
+description: |
+  Get a single Return with its line items — id, name, status, order, and each returned item
+  (title, variant, sku, quantity, reason). Use to see WHICH items a customer requested to return
+  (e.g. an account-initiated REQUESTED return) before approving/answering. order_returns only
+  returns id/name/status; this adds the line items.
+scopes:
+  - read_returns
+input:
+  return_id:
+    type: string
+    description: gid://shopify/Return/123
+    required: true
+graphql: |
+  query ReturnGetCS($return_id: ID!) {
+    return(id: $return_id) {
+      id
+      name
+      status
+      totalQuantity
+      order { id name }
+      returnLineItems(first: 50) {
+        nodes {
+          ... on ReturnLineItem {
+            id
+            quantity
+            returnReason
+            returnReasonNote
+            fulfillmentLineItem {
+              lineItem { title sku variantTitle }
+            }
+          }
+        }
+      }
+    }
+  }
+response:
+  mapping: data.return
