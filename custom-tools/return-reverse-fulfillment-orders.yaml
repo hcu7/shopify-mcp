@@ -5,7 +5,7 @@ description: |
   (which registers a self-purchased GLS/DHL label + tracking on the return).
   Call with the Return GID returned by return_create.
 scopes:
-  - write_returns
+  - read_returns
 input:
   return_id:
     type: string

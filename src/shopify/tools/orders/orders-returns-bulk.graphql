@@ -1,0 +1,47 @@
+query OrdersReturnsBulk(
+	$search_query: String
+	$first: Int!
+	$cursor: String
+	$order_ids: [ID!]! = []
+	$sweep: Boolean!
+	$by_ids: Boolean!
+) {
+	orders(first: $first, after: $cursor, query: $search_query, sortKey: UPDATED_AT) @include(if: $sweep) {
+		nodes {
+			id
+			name
+			returnStatus
+			displayFinancialStatus
+			displayFulfillmentStatus
+			cancelledAt
+			returns(first: 10) {
+				nodes {
+					id
+					name
+					status
+				}
+			}
+		}
+		pageInfo {
+			hasNextPage
+			endCursor
+		}
+	}
+	nodes(ids: $order_ids) @include(if: $by_ids) {
+		... on Order {
+			id
+			name
+			returnStatus
+			displayFinancialStatus
+			displayFulfillmentStatus
+			cancelledAt
+			returns(first: 10) {
+				nodes {
+					id
+					name
+					status
+				}
+			}
+		}
+	}
+}

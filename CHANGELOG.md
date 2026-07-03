@@ -4,6 +4,16 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- `orders_returns_bulk` tool (orders, read-only) — bulk return-status lookup for order syncs. Mode (a) `updated_at_min` (ISO 8601): paginated `updated_at:>=` sweep, returns only orders with `returnStatus != NO_RETURN` (filtered client-side — the direct field read is authoritative, search indexes update asynchronously); mode (b) `order_ids` (numeric or GID, max 250): direct `nodes(ids:)` lookup, unfiltered. Per order: id, name, returnStatus, displayFinancialStatus, displayFulfillmentStatus, cancelledAt, returns (id, name, status). Exactly one of `updated_at_min` / `order_ids` required
+- `get_order` now selects `cancelledAt` (order cancellation detection)
+- Read-only security invariant tests: no tool with a GraphQL mutation is exposed when `read_only` is set, and pure-query tools must not declare `write_` scopes (source scan across built-ins and custom-tools YAML)
+
+### Fixed
+- `order_returns` and `return_reverse_fulfillment_orders` are pure GraphQL queries but declared `write_returns` scope, so the scope-based read-only filter wrongly hid them on `COB_SHOPIFY_READ_ONLY=true` instances — scopes corrected to `read_returns`
+
 ## [0.6.4] - 2026-04-12
 
 ### Security

@@ -4,6 +4,7 @@ query GetOrder($id: ID!) {
     name
     createdAt
     updatedAt
+    cancelledAt
     displayFinancialStatus
     displayFulfillmentStatus
     totalPriceSet {

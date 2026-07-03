@@ -41,6 +41,7 @@
 	"get_order": "get",
 	"list_orders": "list",
 	"mark_order_paid": "mark-paid",
+	"orders_returns_bulk": "orders-returns-bulk",
 	"search_orders": "search",
 	"update_order_note": "update-note",
 	"update_order_tags": "update-tags",

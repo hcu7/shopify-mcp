@@ -4,7 +4,7 @@ description: |
   List all returns of an order (id, name, status) — needed to cancel/close open returns,
   e.g. before cancelling an order (Shopify blocks orderCancel while returns are open) or for cleanup.
 scopes:
-  - write_returns
+  - read_returns
 input:
   order_id:
     type: string

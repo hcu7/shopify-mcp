@@ -7,6 +7,7 @@ export { getOrderFulfillmentStatus } from "./get-order-fulfillment-status.tool.j
 export { getOrderTimeline } from "./get-order-timeline.tool.js";
 export { listOrders } from "./list-orders.tool.js";
 export { markOrderPaid } from "./mark-order-paid.tool.js";
+export { ordersReturnsBulk } from "./orders-returns-bulk.tool.js";
 export { searchOrders } from "./search-orders.tool.js";
 export { updateOrderNote } from "./update-order-note.tool.js";
 export { updateOrderTags } from "./update-order-tags.tool.js";

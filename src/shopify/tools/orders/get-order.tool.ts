@@ -14,6 +14,7 @@ export const getOrder = defineTool({
 		"name",
 		"createdAt",
 		"updatedAt",
+		"cancelledAt",
 		"displayFinancialStatus",
 		"displayFulfillmentStatus",
 		"totalPriceSet",

@@ -7,6 +7,7 @@ const mockData = {
 		name: "#1001",
 		createdAt: "2026-03-01T10:00:00Z",
 		updatedAt: "2026-03-02T10:00:00Z",
+		cancelledAt: null,
 		displayFinancialStatus: "PAID",
 		displayFulfillmentStatus: "FULFILLED",
 		totalPriceSet: { shopMoney: { amount: "129.99", currencyCode: "USD" } },
@@ -67,10 +68,16 @@ describe("get_order", () => {
 		expect(getOrder.graphql).toBeDefined();
 	});
 
+	it("selects cancelledAt for cancellation detection", () => {
+		expect(getOrder.graphql).toContain("cancelledAt");
+		expect(getOrder.outputFields).toContain("cancelledAt");
+	});
+
 	it("maps response with full detail", () => {
 		const result = getOrder.response?.(mockData);
 
 		expect(result.order.id).toBe("gid://shopify/Order/123");
+		expect(result.order.cancelledAt).toBeNull();
 		expect(result.order.lineItems).toHaveLength(1);
 		expect(result.order.lineItems[0].sku).toBe("HOOD-SM");
 		expect(result.order.lineItems[0].variantTitle).toBe("Small / Black");
