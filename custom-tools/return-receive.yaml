@@ -1,0 +1,34 @@
+name: return_receive
+domain: orders
+description: |
+  Mark a Return's line items as physically received (returnReceive). Schritt VOR
+  refundCreate im Widerruf-/Retouren-Refund-Flow — nach Wareneingang, bevor erstattet wird.
+
+  input.input = ReturnReceiveInput (camelCase Shopify shape):
+    {
+      "returnId": "gid://shopify/Return/123",
+      "returnLineItems": [
+        {"id": "gid://shopify/ReturnLineItem/456", "quantity": 1}
+      ]
+    }
+  Die returnLineItem-IDs + Mengen holst du vorher via `return_get`
+  (returnLineItems.nodes[].id + .quantity). Ohne returnLineItems schlaegt die Mutation fehl.
+scopes:
+  - write_returns
+input:
+  input:
+    type: object
+    description: ReturnReceiveInput — returnId + returnLineItems[{id, quantity}].
+    required: true
+graphql: |
+  mutation ReturnReceiveCS($input: ReturnReceiveInput!) {
+    returnReceive(input: $input) {
+      return {
+        id
+        status
+      }
+      userErrors { field message }
+    }
+  }
+response:
+  mapping: data.returnReceive
